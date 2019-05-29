@@ -583,5 +583,110 @@ describe("Scope", function () {
             expect(scope.watchedValue).toBe('changed value');
 
         });
+
+        // Handling Exceptions
+        /* In watches there are two points when exceptions can happen: 
+         * In the watch functions and in the listener functions. 
+         * In this case, we expect the program to continue. */ 
+        it("catches exceptions in watch function and continues", function () {
+            scope.aValue = 'abc';
+            scope.counter = 0;
+
+            scope.$watch(
+                function (scope) {
+                    throw 'Error';
+                },
+                function (newVal, oldVal, scope) {
+                }
+            );
+            scope.$watch(
+                function (scope) {
+                    return scope.aValue;
+                },
+                function (newVal, oldVal, scope) {
+                    scope.counter++;
+                }
+            );
+
+            scope.$digest();
+            expect(scope.counter).toBe(1);
+        });
+        it("catches exceptions in listener function and continues", function () {
+            scope.aValue = 'abc';
+            scope.counter = 0;
+
+            scope.$watch(
+                function (scope) {
+                    return scope.aValue;
+                },
+                function (newVal, oldVal, scope) {
+                    throw 'Error';
+                }
+            );
+            scope.$watch(
+                function (scope) {
+                    return scope.aValue;
+                },
+                function (newVal, oldVal, scope) {
+                    scope.counter++;
+                }
+            );
+
+            scope.$digest();
+            expect(scope.counter).toBe(1);
+        });
+        /* $evalAsync $applyAsync $postDiges : are all used to execute in relation to the digest loop
+         * In none of them do we want an exception to cause the loop to end prematurely. */
+        it("catches exceptions in $evalAsync", function (done) {
+            scope.aValue = 'abc';
+            scope.counter = 0;
+
+            scope.$watch(
+                function (scope) {
+                    return scope.aValue;
+                },
+                function (newVal, oldVal, scope) {
+                    scope.counter++;
+                }
+            );
+
+            scope.$evalAsync(function (scope) {
+                throw 'Error';
+            });
+
+            setTimeout(function () {
+                expect(scope.counter).toBe(1);
+                done();
+            }, 50);
+        });
+        it("catches exceptions in $applyAsync", function (done) {
+            scope.$applyAsync(function () {
+                throw 'Error';
+            });
+            scope.$applyAsync(function () {
+                throw 'Error';
+            });
+            scope.$applyAsync(function () {
+                scope.applied = true;
+            });
+
+            setTimeout(function () {
+                expect(scope.applied).toBe(true);
+                done();
+            }, 50);
+        });
+        it("catches exceptions in $$postDigest", function () {
+            var didRun = false;
+
+            scope.$$postDigest(function () {
+                throw 'Error';
+            });
+            scope.$$postDigest(function () {
+                didRun = true;
+            });
+            
+            scope.$digest();
+            expect(didRun).toBe(true);
+        });
     });
 });

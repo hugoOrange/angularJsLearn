@@ -52,7 +52,11 @@ Scope.prototype.$$areEqual = function (newVal, oldVal, valueEq) {
 
 Scope.prototype.$$flushApplyAsync = function () {
     while (this.$$applyAsyncQueue.length) {
-        this.$$applyAsyncQueue.shift()();
+        try {
+            this.$$applyAsyncQueue.shift()();
+        } catch (e) {
+            console.log(e);
+        }
     }
     this.$$applyAsyncId = null;
 }
@@ -61,18 +65,23 @@ Scope.prototype.$$digestOnce = function () {
     var self = this;
     var newVal, oldVal, dirty;
     _.forEach(this.$$watchers, function (watcher) {
-        newVal = watcher.watchFn(self);
-        oldVal = watcher.last;
-        if (!self.$$areEqual(newVal, oldVal, watcher.valueEq)) {
-            self.$$lastDirtyWatch = watcher;
-            watcher.last = (watcher.valueEq ? _.cloneDeep(newVal) : newVal);
-            watcher.listenerFn(newVal, 
-                (oldVal === initWatchVal ? newVal : oldVal),
-                self);
+        try {
+            newVal = watcher.watchFn(self);
+            oldVal = watcher.last;
+            if (!self.$$areEqual(newVal, oldVal, watcher.valueEq)) {
+                self.$$lastDirtyWatch = watcher;
+                watcher.last = (watcher.valueEq ? _.cloneDeep(newVal) : newVal);
+                watcher.listenerFn(newVal, 
+                    (oldVal === initWatchVal ? newVal : oldVal),
+                    self);
 
-            dirty = true;
-        } else if (self.$$lastDirtyWatch === watcher) {
-            return false;
+                dirty = true;
+            } else if (self.$$lastDirtyWatch === watcher) {
+                return false;
+            }
+        } catch (e) {
+            // In angular, there is a specific service to deal with exceptions: $exceptionHandler
+            console.log(e);
         }
     });
     return dirty;
@@ -92,8 +101,12 @@ Scope.prototype.$digest = function () {
     
     do {
         if (this.$$asyncQueue.length) {
-            var asyncTask = this.$$asyncQueue.shift();
-            asyncTask.scope.$eval(asyncTask.expression);
+            try {
+                var asyncTask = this.$$asyncQueue.shift();
+                asyncTask.scope.$eval(asyncTask.expression);
+            } catch (e) {
+                console.log(e);
+            }
         }
         dirty = this.$$digestOnce();
         if ((dirty || this.$$asyncQueue.length) && !(TTL--)) {
@@ -104,7 +117,11 @@ Scope.prototype.$digest = function () {
     this.$clearPhase();
 
     while (this.$$postDigestQueue.length) {
-        this.$$postDigestQueue.shift()();
+        try {
+            this.$$postDigestQueue.shift()();
+        } catch (e) {
+            console.log(e);
+        }
     }
 };
 
