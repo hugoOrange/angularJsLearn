@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 describe("Scope", function () {
 
@@ -388,7 +388,7 @@ describe("Scope", function () {
             expect(function () {
                 scope.$digest();
             }).toThrow();
-        })
+        });
 
         // Scope Phase
         it("has a $$phase field whose value is the current digest phase", function () {
@@ -461,7 +461,7 @@ describe("Scope", function () {
             });
             expect(scope.counter).toBe(1);
 
-            setTimeout(() => {
+            setTimeout(function () {
                 expect(scope.counter).toBe(2);
                 done();
             }, 50);

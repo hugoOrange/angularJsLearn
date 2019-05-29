@@ -13,7 +13,8 @@ module.exports = function (grunt) {
                     expect: false,
                     beforeEach: false,
                     afterEach: false,
-                    sinon: false
+                    sinon: false,
+                    Scope: false
                 },
                 browser: true,
                 devel: true

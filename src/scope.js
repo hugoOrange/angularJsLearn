@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 /*
  * using tip:
@@ -23,11 +23,11 @@ Scope.prototype.$beginPhase = function (phase) {
         throw this.$$phase + ' already in progress.';
     }
     this.$$phase = phase;
-}
+};
 
 Scope.prototype.$clearPhase = function () {
     this.$$phase = null;
-}
+};
 
 Scope.prototype.$watch = function (watchFn, listenerFn, valueEq) {
     var watcher = {
@@ -48,7 +48,7 @@ Scope.prototype.$$areEqual = function (newVal, oldVal, valueEq) {
             (typeof newVal === 'number' && typeof oldVal === 'number' &&
                 _.isNaN(newVal) && _.isNaN(oldVal));
     }
-}
+};
 
 Scope.prototype.$$flushApplyAsync = function () {
     while (this.$$applyAsyncQueue.length) {
@@ -59,7 +59,7 @@ Scope.prototype.$$flushApplyAsync = function () {
         }
     }
     this.$$applyAsyncId = null;
-}
+};
 
 Scope.prototype.$$digestOnce = function () {
     var self = this;
@@ -85,7 +85,7 @@ Scope.prototype.$$digestOnce = function () {
         }
     });
     return dirty;
-}
+};
 
 Scope.prototype.$digest = function () {
     var dirty = true;
@@ -131,13 +131,13 @@ Scope.prototype.$digest = function () {
 // can be run inside or outside the $digest
 Scope.prototype.$eval = function (expr, locals) {
     return expr(this, locals);
-}
+};
 
 // Deferred execution('$eval') in listener
 Scope.prototype.$evalAsync = function (expr, locals) {
     var self = this;
     if (!self.$$phase && !self.$$asyncQueue.length) {
-        setTimeout(() => {
+        setTimeout(function () {
             if (self.$$asyncQueue.length) {
                 self.$digest();
             }
@@ -147,7 +147,7 @@ Scope.prototype.$evalAsync = function (expr, locals) {
         scope: this,
         expression: expr
     });
-}
+};
 
 // Execution with the context of the scope and auto dirty-checking
 Scope.prototype.$apply = function (expr) {
@@ -158,7 +158,7 @@ Scope.prototype.$apply = function (expr) {
         this.$clearPhase();
         this.$digest();
     }
-}
+};
 
 // Deferred execution('$apply') in listener
 Scope.prototype.$applyAsync = function (expr) {
@@ -173,8 +173,8 @@ Scope.prototype.$applyAsync = function (expr) {
             self.$apply(_.bind(self.$$flushApplyAsync, self));
         }, 0);
     }
-}
+};
 
 Scope.prototype.$$postDigest = function (fn) {
     this.$$postDigestQueue.push(fn);
-}
+};
