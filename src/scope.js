@@ -4,9 +4,12 @@
  * using tip:
  * 1. avoid using 'valueEq'(deep copy)
  * 2. using $applyAsync to coalsecing the $digest
+ * 3. sometimes we can use $digest instead of $apply, for the $apply would
+ *    $digest all the scope
  */
 
 function Scope() {
+    this.$root = this;
     this.$$watchers = [];
     this.$$lastDirtyWatch = null;
     this.$$asyncQueue = [];
@@ -50,12 +53,12 @@ Scope.prototype.$watch = function (watchFn, listenerFn, valueEq) {
         last: initWatchVal
     };
     this.$$watchers.unshift(watcher);
-    this.$$lastDirtyWatch = null;
+    this.$root.$$lastDirtyWatch = null;
     return function () {
         var index = self.$$watchers.indexOf(watcher);
         if (index >= 0) {
             self.$$watchers.splice(index, 1);
-            self.$$lastDirtyWatch = null;
+            self.$root.$$lastDirtyWatch = null;
         }
     };
 };
@@ -140,8 +143,6 @@ Scope.prototype.$$everyScope = function (fn) {
 
 Scope.prototype.$$digestOnce = function () {
     var dirty;
-    var continueLoop = true;
-    var self = this;
     this.$$everyScope(function (scope) {
         var newVal, oldVal;
         _.forEachRight(scope.$$watchers, function (watcher) {
@@ -150,15 +151,15 @@ Scope.prototype.$$digestOnce = function () {
                     newVal = watcher.watchFn(scope);
                     oldVal = watcher.last;
                     if (!scope.$$areEqual(newVal, oldVal, watcher.valueEq)) {
-                        self.$$lastDirtyWatch = watcher;
+                        scope.$root.$$lastDirtyWatch = watcher;
                         watcher.last = (watcher.valueEq ? _.cloneDeep(newVal) : newVal);
                         watcher.listenerFn(newVal, 
                             (oldVal === initWatchVal ? newVal : oldVal),
                             scope);
 
                         dirty = true;
-                    } else if (self.$$lastDirtyWatch === watcher) {
-                        continueLoop = false;
+                    } else if (scope.$root.$$lastDirtyWatch === watcher) {
+                        dirty = false;
                         return false;
                     }
                 }
@@ -167,16 +168,15 @@ Scope.prototype.$$digestOnce = function () {
                 console.log(e);
             }
         });
-        return continueLoop;
+        return dirty !== false;
     });
     return dirty;
 };
 
 Scope.prototype.$digest = function () {
     var dirty = true;
-    // "TTL" -- "Time To Live"
-    var TTL = 10;
-    this.$$lastDirtyWatch = null;
+    var TTL = 10; // "TTL" -- "Time To Live"
+    this.$root.$$lastDirtyWatch = null;
     this.$beginPhase('$digest');
     
     if (this.$$applyAsyncId) {
@@ -224,7 +224,7 @@ Scope.prototype.$evalAsync = function (expr, locals) {
     if (!self.$$phase && !self.$$asyncQueue.length) {
         setTimeout(function () {
             if (self.$$asyncQueue.length) {
-                self.$digest();
+                self.$root.$digest();
             }
         }, 0);
     }
@@ -241,7 +241,7 @@ Scope.prototype.$apply = function (expr) {
         this.$eval(expr);
     } finally {
         this.$clearPhase();
-        this.$digest();
+        this.$root.$digest();
     }
 };
 
