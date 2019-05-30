@@ -1166,5 +1166,116 @@ describe("Scope", function () {
                 done();
             }, 50);
         });
+
+        // Isolated Scope: parent can $digest but cannot modify its attributes
+        it("does not have access to parent attributes when isolated", function () {
+            var parent = new Scope();
+            var child = parent.$new(true);
+            
+            parent.value = 'abc';
+
+            expect(child.aValue).toBeUndefined();
+        });
+        it("cannot watch parent attribute when isolated", function () {
+            var parent = new Scope();
+            var child = parent.$new(true);
+
+            parent.aValue = 'abc';
+            child.$watch(
+                function (scope) {
+                    return scope.aValue;
+                },
+                function (newVal, oldVal, scope) {
+                    scope.aValueWas = newVal;
+                }
+            );
+
+            child.$digest();
+            expect(child.aValueWas).toBeUndefined();
+        });
+        it("digests its isolated children", function () {
+            var parent = new Scope();
+            var child = parent.$new(true);
+
+            child.aValue = 'abc';
+            child.$watch(
+                function (scope) {
+                    return scope.aValue;
+                },
+                function (newVal, oldVal, scope) {
+                    scope.aValueWas = newVal;
+                }
+            );
+
+            parent.$digest();
+            expect(child.aValueWas).toBe('abc');
+        });
+        it("digest from root on $apply when isolated", function () {
+            var parent = new Scope();
+            var child = parent.$new(true);
+            var child2 = child.$new();
+
+            parent.aValue = 'abc';
+            parent.counter = 0;
+            parent.$watch(
+                function (scope) {
+                    return scope.aValue;
+                },
+                function (newVal, oldVal, scope) {
+                    scope.counter++;
+                }
+            );
+
+            child2.$apply(function (scope) { });
+
+            expect(parent.counter).toBe(1);
+        });
+        it("schedules a digest from root on $evalAsync", function (done) {
+            var parent = new Scope();
+            var child = parent.$new(true);
+            var child2 = parent.$new();
+
+            parent.aValue = 'abc';
+            parent.counter = 0;
+            parent.$watch(
+                function (scope) {
+                    return scope.aValue;
+                },
+                function (newVal, oldVal, scope) {
+                    scope.counter++;
+                }
+            );
+
+            child2.$evalAsync(function (scope) { });
+
+            setTimeout(function () {
+                expect(parent.counter).toBe(1);
+                done();
+            }, 50);
+        });
+        it("exectutes $evalAsync functions on isolated scopes", function (done) {
+            var parent = new Scope();
+            var child = parent.$new(true);
+
+            child.$evalAsync(function (scope) {
+                scope.didEvalAsync = true;
+            });
+
+            setTimeout(() => {
+                expect(child.didEvalAsync).toBe(true);
+                done();
+            }, 50);
+        });
+        it("exectutes $postDigest functions on isolated scopes", function () {
+            var parent = new Scope();
+            var child = parent.$new(true);
+
+            child.$$postDigest(function () {
+                child.didEvalAsync = true;
+            });
+            parent.$digest();
+
+            expect(child.didEvalAsync).toBe(true);
+        });
     });
 });
