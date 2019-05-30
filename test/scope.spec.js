@@ -1069,5 +1069,24 @@ describe("Scope", function () {
             expect(child.user.name).toBe('Jane');
             expect(parent.user.name).toBe('Jane');
         });
+
+        // Separated Watches
+        it("does not digest its parent(s)", function () {
+            var parent = new Scope();
+            var child = parent.$new();
+
+            parent.aValue = 'abc';
+            parent.$watch(
+                function (scope) {
+                    return scope.aValue;
+                },
+                function (newVal, oldVal,scope) {
+                    scope.aValueWas = newVal;
+                }
+            );
+
+            child.$digest();
+            expect(child.aValueWas).toBeUndefined();
+        });
     });
 });
