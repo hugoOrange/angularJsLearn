@@ -13,6 +13,8 @@ function Scope() {
     this.$$applyAsyncQueue = [];
     this.$$applyAsyncId = null;
     this.$$postDigestQueue = [];
+    // In AngularJS, it uses $$nextSibling, $$prevSibling, etc. with better performance.
+    this.$$children = [];
     this.$$phase = null;
 }
 
@@ -22,9 +24,11 @@ Scope.prototype.$new = function () {
     var ChildScope = function () { };
     ChildScope.prototype = this;
     var child = new ChildScope();
+    this.$$children.push(child);
     child.$$watchers = [];
+    child.$$children = [];
     return child;
-}
+};
 
 Scope.prototype.$beginPhase = function (phase) {
     if (this.$$phase) {
@@ -100,7 +104,7 @@ Scope.prototype.$watchGroup = function (watchFns, listenerFn) {
         _.forEach(destroyFunctions, function (destroyFunction) {
             destroyFunction();
         });
-    }
+    };
 };
 
 Scope.prototype.$$areEqual = function (newVal, oldVal, valueEq) {
@@ -124,30 +128,46 @@ Scope.prototype.$$flushApplyAsync = function () {
     this.$$applyAsyncId = null;
 };
 
-Scope.prototype.$$digestOnce = function () {
-    var self = this;
-    var newVal, oldVal, dirty;
-    _.forEachRight(this.$$watchers, function (watcher) {
-        try {
-            if (watcher) {
-                newVal = watcher.watchFn(self);
-                oldVal = watcher.last;
-                if (!self.$$areEqual(newVal, oldVal, watcher.valueEq)) {
-                    self.$$lastDirtyWatch = watcher;
-                    watcher.last = (watcher.valueEq ? _.cloneDeep(newVal) : newVal);
-                    watcher.listenerFn(newVal, 
-                        (oldVal === initWatchVal ? newVal : oldVal),
-                        self);
+Scope.prototype.$$everyScope = function (fn) {
+    if (fn(this)) {
+        return this.$$children.every(function (child) {
+            return child.$$everyScope(fn);
+        });
+    } else {
+        return false;
+    }
+};
 
-                    dirty = true;
-                } else if (self.$$lastDirtyWatch === watcher) {
-                    return false;
+Scope.prototype.$$digestOnce = function () {
+    var dirty;
+    var continueLoop = true;
+    var self = this;
+    this.$$everyScope(function (scope) {
+        var newVal, oldVal;
+        _.forEachRight(scope.$$watchers, function (watcher) {
+            try {
+                if (watcher) {
+                    newVal = watcher.watchFn(scope);
+                    oldVal = watcher.last;
+                    if (!scope.$$areEqual(newVal, oldVal, watcher.valueEq)) {
+                        self.$$lastDirtyWatch = watcher;
+                        watcher.last = (watcher.valueEq ? _.cloneDeep(newVal) : newVal);
+                        watcher.listenerFn(newVal, 
+                            (oldVal === initWatchVal ? newVal : oldVal),
+                            scope);
+
+                        dirty = true;
+                    } else if (self.$$lastDirtyWatch === watcher) {
+                        continueLoop = false;
+                        return false;
+                    }
                 }
+            } catch (e) {
+                // In angular, there is a specific service to deal with exceptions: $exceptionHandler
+                console.log(e);
             }
-        } catch (e) {
-            // In angular, there is a specific service to deal with exceptions: $exceptionHandler
-            console.log(e);
-        }
+        });
+        return continueLoop;
     });
     return dirty;
 };
