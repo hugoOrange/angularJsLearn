@@ -1047,5 +1047,27 @@ describe("Scope", function () {
             expect(ab.anotherValue).toBe(2);
             expect(abb.anotherValue).toBe(2);
         });
+
+        // Attributes Shadowing
+        it("shadows a parent's property with the same name", function () {
+            var parent = new Scope();
+            var child = parent.$new();
+
+            parent.name = 'Joe';
+            child.name = 'Jane';
+
+            expect(parent.name).toBe('Joe');
+            expect(child.name).toBe('Jane');
+        });
+        it("does not shadow members of parent scope's attributes", function () {
+            var parent = new Scope();
+            var child = parent.$new();
+
+            parent.user = {name: 'Joe'};
+            child.user.name = 'Jane';
+
+            expect(child.user.name).toBe('Jane');
+            expect(parent.user.name).toBe('Jane');
+        });
     });
 });
