@@ -18,6 +18,13 @@ function Scope() {
 
 function initWatchVal() {}
 
+Scope.prototype.$new = function () {
+    var ChildScope = function () { };
+    ChildScope.prototype = this;
+    var child = new ChildScope();
+    return child;
+}
+
 Scope.prototype.$beginPhase = function (phase) {
     if (this.$$phase) {
         throw this.$$phase + ' already in progress.';
