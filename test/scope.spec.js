@@ -1416,9 +1416,121 @@ describe("Scope", function () {
             scope.arr = [1, 2, 3];
             scope.$digest();
             expect(scope.counter).toBe(2);
-            
+
             scope.$digest();
             expect(scope.counter).toBe(2);
+        });
+
+        // Detecting New or Removed Items in Arrays
+        it("notices an item added to an array", function () {
+            scope.arr = [1, 2, 3];
+            scope.counter = 0;
+
+            scope.$watchCollection(
+                function (scope) {
+                    return scope.arr;
+                },
+                function (newVal, oldVal, scope) {
+                    scope.counter++;
+                }
+            );
+
+            scope.$digest();
+            expect(scope.counter).toBe(1);
+
+            scope.arr.push(4);
+            scope.$digest();
+            expect(scope.counter).toBe(2);
+
+            scope.$digest();
+            expect(scope.counter).toBe(2);
+        });
+        it("notices an item removed from an array", function () {
+            scope.arr = [1, 2, 3];
+            scope.counter = 0;
+
+            scope.$watchCollection(
+                function (scope) {
+                    return scope.arr;
+                },
+                function (newVal, oldVal, scope) {
+                    scope.counter++;
+                }
+            );
+
+            scope.$digest();
+            expect(scope.counter).toBe(1);
+
+            scope.arr.shift();
+            scope.$digest();
+            expect(scope.counter).toBe(2);
+
+            scope.$digest();
+            expect(scope.counter).toBe(2);
+        });
+
+        // Detecting Replaced or Reordered Items in Arrays
+        it("notices an item replaced in an array", function () {
+            scope.arr = [1, 2, 3];
+            scope.counter = 0;
+
+            scope.$watchCollection(
+                function (scope) {
+                    return scope.arr;
+                },
+                function (newVal, oldVal, scope) {
+                    scope.counter++;
+                }
+            );
+
+            scope.$digest();
+            expect(scope.counter).toBe(1);
+
+            scope.arr[1] = 42;
+            scope.$digest();
+            expect(scope.counter).toBe(2);
+
+            scope.$digest();
+            expect(scope.counter).toBe(2);
+        });
+        it("notices an item reordered in an array", function () {
+            scope.arr = [2, 1, 3];
+            scope.counter = 0;
+
+            scope.$watchCollection(
+                function (scope) {
+                    return scope.arr;
+                },
+                function (newVal, oldVal, scope) {
+                    scope.counter++;
+                }
+            );
+
+            scope.$digest();
+            expect(scope.counter).toBe(1);
+
+            scope.arr.sort();
+            scope.$digest();
+            expect(scope.counter).toBe(2);
+
+            scope.$digest();
+            expect(scope.counter).toBe(2);
+        });
+        it("does not fail on NaNs in arrays", function () {
+            scope.arr = [2, NaN, 3];
+            scope.counter = 0;
+
+            scope.$watchCollection(
+                function (scope) {
+                    return scope.arr;
+                },
+                function (newVal, oldVal, scope) {
+                    scope.counter++;
+                }
+            );
+
+            scope.$digest();
+            expect(scope.counter).toBe(1);
         });
     });
 });
