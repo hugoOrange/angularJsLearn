@@ -1585,5 +1585,116 @@ describe("Scope", function () {
             scope.$digest();
             expect(scope.counter).toBe(2);
         });
+
+        // Detecting New Objects
+        it("notices when the value becomes an object", function () {
+            scope.counter = 0;
+
+            scope.$watchCollection(
+                function (scope) {
+                    return scope.obj;
+                },
+                function (newVal, oldVal, scope) {
+                    scope.counter++;
+                }
+            );
+
+            scope.$digest();
+            expect(scope.counter).toBe(1);
+
+            scope.obj = { a: 1 };
+            scope.$digest();
+            expect(scope.counter).toBe(2);
+            
+            scope.$digest();
+            expect(scope.counter).toBe(2);
+        });
+
+        // Detecting New or Replaced Attributes in Objects
+        it("notices when an attribute is added to an object", function () {
+            scope.counter = 0;
+            scope.obj = { a: 1 };
+
+            scope.$watchCollection(
+                function (scope) {
+                    return scope.obj;
+                },
+                function (newVal, oldVal, scope) {
+                    scope.counter++;
+                }
+            );
+
+            scope.$digest();
+            expect(scope.counter).toBe(1);
+
+            scope.obj.b = 2;
+            scope.$digest();
+            expect(scope.counter).toBe(2);
+            
+            scope.$digest();
+            expect(scope.counter).toBe(2);
+        });
+        it("notices when an attribute is changed to an object", function () {
+            scope.counter = 0;
+            scope.obj = { a: 1 };
+
+            scope.$watchCollection(
+                function (scope) {
+                    return scope.obj;
+                },
+                function (newVal, oldVal, scope) {
+                    scope.counter++;
+                }
+            );
+
+            scope.$digest();
+            expect(scope.counter).toBe(1);
+
+            scope.obj.a = 2;
+            scope.$digest();
+            expect(scope.counter).toBe(2);
+            
+            scope.$digest();
+            expect(scope.counter).toBe(2);
+        });
+        it("does not fail on NaNs attributes in objects", function () {
+            scope.counter = 0;
+            scope.obj = { a: NaN };
+
+            scope.$watchCollection(
+                function (scope) {
+                    return scope.obj;
+                },
+                function (newVal, oldVal, scope) {
+                    scope.counter++;
+                }
+            );
+
+            scope.$digest();
+            expect(scope.counter).toBe(1);
+        });
+        it("notices when an attribute is removed to an object", function () {
+            scope.counter = 0;
+            scope.obj = { a: 1 };
+
+            scope.$watchCollection(
+                function (scope) {
+                    return scope.obj;
+                },
+                function (newVal, oldVal, scope) {
+                    scope.counter++;
+                }
+            );
+
+            scope.$digest();
+            expect(scope.counter).toBe(1);
+
+            delete scope.obj.a;
+            scope.$digest();
+            expect(scope.counter).toBe(2);
+            
+            scope.$digest();
+            expect(scope.counter).toBe(2);
+        });
     });
 });
