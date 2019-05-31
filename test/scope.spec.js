@@ -963,7 +963,17 @@ describe("Scope", function () {
 
     describe("inheritance", function () {
 
-        // Making A Child Scope
+        /**
+         * Making A Child Scope
+         **** difference between scope inheritance and JavaScript's native prototypal inheritance ***
+         * 1. Child scope has the properties of its parent scope
+         * 2. A property defined on the child doesn't exist on the paretnt.
+         * 3. When a property is defined on a parent scope, all of the scope's existing child scopes
+         *    also get the property.
+         * 4. We can manipulate a parent scope's properties from the child scope, since both scopes
+         *    actually point to the same value.
+         * 5. We can watch a parent scope's properties from a child scope.
+         */
         it("inherits the parent's a properties", function () {
             var parent = new Scope();
             parent.aValue = [1, 2, 3];
@@ -1167,7 +1177,7 @@ describe("Scope", function () {
             }, 50);
         });
 
-        // Isolated Scope: parent can $digest but cannot modify its attributes
+        // Isolated Scope: parent can $digest it but cannot access its attributes
         it("does not have access to parent attributes when isolated", function () {
             var parent = new Scope();
             var child = parent.$new(true);
