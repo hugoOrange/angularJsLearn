@@ -6,6 +6,7 @@
 * 2. using $applyAsync to coalsecing the $digest
 * 3. sometimes we can use $digest instead of $apply, for the $apply would
 *    $digest all the scope
+* 4. watch level -- see detail in "../img/concepts-scope-watch-strategies.png"
 */
 
 function Scope() {
@@ -131,6 +132,19 @@ Scope.prototype.$watchGroup = function (watchFns, listenerFn) {
         });
     };
 };
+
+Scope.prototype.$watchCollection = function (watchFn, listenerFn) {
+    
+    var internalWatchFn = function (scope) {
+        
+    };
+
+    var internalListenerFn = function () {
+        
+    };
+
+    return this.$watch(internalWatchFn, internalListenerFn);
+}
 
 Scope.prototype.$$areEqual = function (newVal, oldVal, valueEq) {
     if (valueEq) {

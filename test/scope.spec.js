@@ -960,6 +960,7 @@ describe("Scope", function () {
         });
     });
 
+    // Scope Inheritance
     describe("inheritance", function () {
 
         /**
@@ -1337,5 +1338,16 @@ describe("Scope", function () {
             parent.$digest();
             expect(child.counter).toBe(2);
         });
+    });
+
+    // add '$watchCollection' watch an array or object instead of value-based watching
+    describe("$watchCollection", function () {
+        
+        var scope;
+
+        beforeEach(function () {
+            scope = new Scope();
+        });
+        
     });
 });
