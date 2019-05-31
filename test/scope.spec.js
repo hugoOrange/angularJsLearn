@@ -1,5 +1,7 @@
+/* jshint globalstrict: true  */
+"use strict";
+
 describe("Scope", function () {
-    "use strict";
 
     // Scope Objects
     it("can be constuected and used as an object", function () {
@@ -1531,6 +1533,57 @@ describe("Scope", function () {
 
             scope.$digest();
             expect(scope.counter).toBe(1);
+        });
+
+        // Array-like Objects
+        it("notices an item replaced in an arguments object", function () {
+            (function () {
+                scope.arrayLike = arguments;
+            })(1, 2, 3);
+            scope.counter = 0;
+
+            scope.$watchCollection(
+                function (scope) {
+                    return scope.arrayLike;
+                },
+                function (newVal, oldVal, scope) {
+                    scope.counter++;
+                }
+            );
+
+            scope.$digest();
+            expect(scope.counter).toBe(1);
+            
+            scope.arrayLike[1] = 42;
+            scope.$digest();
+            expect(scope.counter).toBe(2);
+            
+            scope.$digest();
+            expect(scope.counter).toBe(2);
+        });
+        it("notices an item replaced in an NodeList object", function () {
+            document.documentElement.appendChild(document.createElement("div"));
+            scope.arrayLike = document.getElementsByTagName("div");
+            scope.counter = 0;
+
+            scope.$watchCollection(
+                function (scope) {
+                    return scope.arrayLike;
+                },
+                function (newVal, oldVal, scope) {
+                    scope.counter++;
+                }
+            );
+
+            scope.$digest();
+            expect(scope.counter).toBe(1);
+            
+            document.documentElement.appendChild(document.createElement("div"));
+            scope.$digest();
+            expect(scope.counter).toBe(2);
+            
+            scope.$digest();
+            expect(scope.counter).toBe(2);
         });
     });
 });
