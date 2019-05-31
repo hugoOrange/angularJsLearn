@@ -24,8 +24,9 @@ function Scope() {
 function initWatchVal() {}
 
 Scope.prototype.$new = function (isolated) {
+    var child;
     if (isolated) {
-        var child = new Scope();
+        child = new Scope();
         child.$root = this.$root;
         child.$$asyncQueue = this.$$asyncQueue;
         child.$$postDigestQueue = this.$$postDigestQueue;
@@ -33,7 +34,7 @@ Scope.prototype.$new = function (isolated) {
     } else {
         var ChildScope = function () { };
         ChildScope.prototype = this;
-        var child = new ChildScope();
+        child = new ChildScope();
     }
     this.$$children.push(child);
     child.$$watchers = [];

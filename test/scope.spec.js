@@ -1161,7 +1161,7 @@ describe("Scope", function () {
 
             child2.$evalAsync(function (scope) { });
 
-            setTimeout(() => {
+            setTimeout(function () {
                 expect(parent.counter).toBe(1);
                 done();
             }, 50);
@@ -1261,7 +1261,7 @@ describe("Scope", function () {
                 scope.didEvalAsync = true;
             });
 
-            setTimeout(() => {
+            setTimeout(function () {
                 expect(child.didEvalAsync).toBe(true);
                 done();
             }, 50);
@@ -1277,5 +1277,7 @@ describe("Scope", function () {
 
             expect(child.didEvalAsync).toBe(true);
         });
+
+        
     });
 });
