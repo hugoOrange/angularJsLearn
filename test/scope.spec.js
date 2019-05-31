@@ -1,6 +1,5 @@
-"use strict";
-
 describe("Scope", function () {
+    "use strict";
 
     // Scope Objects
     it("can be constuected and used as an object", function () {
@@ -586,8 +585,8 @@ describe("Scope", function () {
 
         // Handling Exceptions
         /* In watches there are two points when exceptions can happen: 
-         * In the watch functions and in the listener functions. 
-         * In this case, we expect the program to continue. */ 
+        * In the watch functions and in the listener functions. 
+        * In this case, we expect the program to continue. */ 
         it("catches exceptions in watch function and continues", function () {
             scope.aValue = 'abc';
             scope.counter = 0;
@@ -636,7 +635,7 @@ describe("Scope", function () {
             expect(scope.counter).toBe(1);
         });
         /* $evalAsync $applyAsync $postDiges : are all used to execute in relation to the digest loop
-         * In none of them do we want an exception to cause the loop to end prematurely. */
+        * In none of them do we want an exception to cause the loop to end prematurely. */
         it("catches exceptions in $evalAsync", function (done) {
             scope.aValue = 'abc';
             scope.counter = 0;
@@ -966,14 +965,14 @@ describe("Scope", function () {
         /**
          * Making A Child Scope
          **** difference between scope inheritance and JavaScript's native prototypal inheritance ***
-         * 1. Child scope has the properties of its parent scope
-         * 2. A property defined on the child doesn't exist on the paretnt.
-         * 3. When a property is defined on a parent scope, all of the scope's existing child scopes
-         *    also get the property.
-         * 4. We can manipulate a parent scope's properties from the child scope, since both scopes
-         *    actually point to the same value.
-         * 5. We can watch a parent scope's properties from a child scope.
-         */
+        * 1. Child scope has the properties of its parent scope
+        * 2. A property defined on the child doesn't exist on the paretnt.
+        * 3. When a property is defined on a parent scope, all of the scope's existing child scopes
+        *    also get the property.
+        * 4. We can manipulate a parent scope's properties from the child scope, since both scopes
+        *    actually point to the same value.
+        * 5. We can watch a parent scope's properties from a child scope.
+        */
         it("inherits the parent's a properties", function () {
             var parent = new Scope();
             parent.aValue = [1, 2, 3];
@@ -1299,7 +1298,7 @@ describe("Scope", function () {
 
             child.counter = 0;
             child.$watch(function (scope) {
-                scope.counter++;;
+                scope.counter++;
             });
 
             prototypeParent.$digest();

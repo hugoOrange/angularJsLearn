@@ -1,12 +1,12 @@
 "use strict";
 
 /*
- * using tip:
- * 1. avoid using 'valueEq'(deep copy)
- * 2. using $applyAsync to coalsecing the $digest
- * 3. sometimes we can use $digest instead of $apply, for the $apply would
- *    $digest all the scope
- */
+* using tip:
+* 1. avoid using 'valueEq'(deep copy)
+* 2. using $applyAsync to coalsecing the $digest
+* 3. sometimes we can use $digest instead of $apply, for the $apply would
+*    $digest all the scope
+*/
 
 function Scope() {
     this.$root = this;
