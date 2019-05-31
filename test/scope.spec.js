@@ -1696,5 +1696,30 @@ describe("Scope", function () {
             scope.$digest();
             expect(scope.counter).toBe(2);
         });
+
+        // Dealing with Objects that Have A Length
+        it("does not consider any object with a length property an array", function () {
+            scope.obj = {
+                length: 42,
+                otherKey: 'abc'
+            };
+            scope.counter = 0;
+
+            scope.$watchCollection(
+                function (scope) {
+                    return scope.obj;
+                },
+                function (newVal, oldVal, scope) {
+                    scope.counter++;
+                }
+            );
+            
+            scope.$digest();
+
+            scope.obj.newKey = 'def';
+            scope.$digest();
+
+            expect(scope.counter).toBe(2);
+        });
     });
 });
