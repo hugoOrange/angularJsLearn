@@ -1931,5 +1931,19 @@ describe("Scope", function () {
                 expect(nextListener).toHaveBeenCalled();
             });
         });
+
+        // Emitting Up the Scope Hierarchy
+        it("progagates up the scope hierarchy on $emit", function () {
+            var parentListener = jasmine.createSpy();
+            var scopeListener = jasmine.createSpy();
+
+            parent.$on("someEvent", parentListener);
+            scope.$on("someEvent", scopeListener);
+
+            scope.$emit("someEvent");
+
+            expect(parentListener).toHaveBeenCalled();
+            expect(scopeListener).toHaveBeenCalled();
+        });
     });
 });
