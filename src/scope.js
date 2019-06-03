@@ -391,7 +391,7 @@ Scope.prototype.$on = function (eventName, listener) {
         if (index >= 0) {
             listeners[index] = null;
         }
-    }
+    };
 };
 
 // Attention: the lodash function 'rest' is completely different in the latest version(> 3.10.1)
@@ -408,7 +408,10 @@ Scope.prototype.$emit = function (eventName) {
 Scope.prototype.$broadcast = function (eventName) {
     var event = { name: eventName };
     var listenerArgs = [event].concat(_.rest(arguments));
-    this.$$fireEventOnScope(eventName, listenerArgs);
+    this.$$everyScope(function (scope) {
+        scope.$$fireEventOnScope(eventName, listenerArgs);
+        return true;
+    });
     return event;
 };
 
