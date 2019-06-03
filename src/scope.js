@@ -391,11 +391,11 @@ Scope.prototype.$on = function (eventName, listener) {
 Scope.prototype.$emit = function (eventName) {
     // Attention: the lodash function 'rest' is completely different in the latest version(> 3.10.1)
     var additionalArgs = _.rest(arguments);
-    this.$$fireEventOnScope(eventName, additionalArgs);
+    return this.$$fireEventOnScope(eventName, additionalArgs);
 };
 Scope.prototype.$broadcast = function (eventName) {
     var additionalArgs = _.rest(arguments);
-    this.$$fireEventOnScope(eventName, additionalArgs);
+    return this.$$fireEventOnScope(eventName, additionalArgs);
 };
 
 Scope.prototype.$$fireEventOnScope = function (eventName, additionalArgs) {
@@ -405,4 +405,5 @@ Scope.prototype.$$fireEventOnScope = function (eventName, additionalArgs) {
     _.forEach(listeners, function (listener) {
         listener.apply(null, listenerArgs);
     });
+    return event;
 };

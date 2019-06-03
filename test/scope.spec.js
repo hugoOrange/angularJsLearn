@@ -1895,6 +1895,14 @@ describe("Scope", function () {
                 expect(listener.calls.mostRecent().args[2]).toEqual(["additional", "arguments"]);
                 expect(listener.calls.mostRecent().args[3]).toEqual("...");
             });
+
+            // Returning The Event Object
+            it("returns the event obejct on " + method, function () {
+                var returnedEvent = scope[method]("someEvent");
+
+                expect(returnedEvent).toBeDefined();
+                expect(returnedEvent.name).toEqual("someEvent");
+            });
         });
     });
 });
