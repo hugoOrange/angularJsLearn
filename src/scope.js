@@ -8,6 +8,8 @@
 * 3. sometimes we can use $digest instead of $apply, for the $apply would
 *    $digest all the scope
 * 4. watch level -- see detail in "../img/concepts-scope-watch-strategies.png"
+* 5. $broadcast is great more expensive then $emit, not only beacause $broadcast
+*    would trigger all its chldren, but also it doesn't have a stop function
 */
 
 function Scope() {
