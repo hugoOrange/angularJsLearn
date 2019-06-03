@@ -396,10 +396,17 @@ Scope.prototype.$on = function (eventName, listener) {
 
 // Attention: the lodash function 'rest' is completely different in the latest version(> 3.10.1)
 Scope.prototype.$emit = function (eventName) {
+    var propagationStopped = false;
     var event = {
         name: eventName,
         targetScope: this,
-        currentScope: this
+        currentScope: this,
+        preventDefault: function () {
+            event.defaultPrevented = true;
+        },
+        stopPropagation: function () {
+            propagationStopped = true;
+        }
     };
     var listenerArgs = [event].concat(_.rest(arguments));
     var scope = this;
@@ -407,7 +414,7 @@ Scope.prototype.$emit = function (eventName) {
         event.currentScope = scope;
         scope.$$fireEventOnScope(eventName, listenerArgs);
         scope = scope.$parent;
-    } while (scope);
+    } while (scope && !propagationStopped);
     event.currentScope = null;
     return event;
 };
@@ -415,7 +422,10 @@ Scope.prototype.$broadcast = function (eventName) {
     var event = {
         name: eventName,
         targetScope: this,
-        currentScope: this
+        currentScope: this,
+        preventDefault: function () {
+            event.defaultPrevented = true;
+        }
     };
     var listenerArgs = [event].concat(_.rest(arguments));
     this.$$everyScope(function (scope) {
