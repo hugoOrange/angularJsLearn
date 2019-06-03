@@ -20,6 +20,7 @@ function Scope() {
     this.$$postDigestQueue = [];
     // In AngularJS, it uses $$nextSibling, $$prevSibling, etc. with better performance.
     this.$$children = [];
+    this.$$listeners = {};
     this.$$phase = null;
 }
 
@@ -42,6 +43,7 @@ Scope.prototype.$new = function (isolated, parent) {
     parent.$$children.push(child);
     child.$$watchers = [];
     child.$$children = [];
+    child.$$listeners = {};
     child.$parent = parent;
     return child;
 };
@@ -374,4 +376,14 @@ Scope.prototype.$applyAsync = function (expr) {
 
 Scope.prototype.$$postDigest = function (fn) {
     this.$$postDigestQueue.push(fn);
+};
+
+
+
+Scope.prototype.$on = function (eventName, listener) {
+    var listeners = this.$$listeners[eventName];
+    if (!listeners) {
+        this.$$listeners[eventName] = listeners = [];
+    }
+    listeners.push(listener);
 };
