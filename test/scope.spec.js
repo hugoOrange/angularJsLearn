@@ -2108,5 +2108,33 @@ describe("Scope", function () {
             expect(event.defaultPrevented).toBe(true);
         });
 
+        // Broadcasting Scope Removal
+        it("fires $destroy when destroyed", function () {
+            var listener = jasmine.createSpy();
+            scope.$on("$destroy", listener);
+
+            scope.$destroy();
+
+            expect(listener).toHaveBeenCalled();
+        });
+        it("fires $destroy on children destroyed", function () {
+            var listener = jasmine.createSpy();
+            child.$on("$destroy", listener);
+
+            scope.$destroy();
+
+            expect(listener).toHaveBeenCalled();
+        });
+
+        // Disabling Listeners On Destroyed Scopes
+        it("no longers calls listeners after destroyed", function () {
+            var listener = jasmine.createSpy();
+            scope.$on("myEvent", listener);
+
+            scope.$destroy();
+
+            scope.$emit("myEvent");
+            expect(listener).not.toHaveBeenCalled();
+        });
     });
 });
