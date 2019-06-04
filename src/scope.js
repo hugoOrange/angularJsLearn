@@ -10,6 +10,7 @@
 * 4. watch level -- see detail in "../img/concepts-scope-watch-strategies.png"
 * 5. $broadcast is great more expensive then $emit, not only beacause $broadcast
 *    would trigger all its chldren, but also it doesn't have a stop function
+* 6. expression wiki -- see detail in "../img/angular_expressions_cheatsheet.png"
 */
 
 function Scope() {
