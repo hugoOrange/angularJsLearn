@@ -95,4 +95,10 @@ describe("parse", function () {
         var fn = parse("false");
         expect(fn()).toBe(false);
     });
+
+    // Parsing Whitespace
+    it("ignores whitespace", function () {
+        var fn = parse(" \n 42 ");
+        expect(fn()).toEqual(42);
+    });
 });
