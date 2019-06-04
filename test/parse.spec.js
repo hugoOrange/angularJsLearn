@@ -81,4 +81,18 @@ describe("parse", function () {
             parse('"\\u00T0"');
         }).toThrow();
     });
+
+    // Parsing identifier
+    it("will parse null", function () {
+        var fn = parse("null");
+        expect(fn()).toBe(null);
+    });
+    it("will parse true", function () {
+        var fn = parse("true");
+        expect(fn()).toBe(true);
+    });
+    it("will parse false", function () {
+        var fn = parse("false");
+        expect(fn()).toBe(false);
+    });
 });
