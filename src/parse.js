@@ -22,34 +22,109 @@ function parse(expr) {
     return parser.parse(expr);
 }
 
-/* Lexer */
+/********************** Lexer **********************/
 function Lexer() {
     
 }
 
 Lexer.prototype.lex = function (text) {
-    
+    this.text = text;
+    this.index = 0;
+    this.ch = undefined;
+    this.tokens = [];
+
+    while (this.index < this.text.length) {
+        this.ch = this.text.charAt(this.index);
+        if (this.isNumber(this.ch)) {
+            this.readNumber();
+        } else {
+            throw "Unexpected next character: " + this.ch;
+        }
+    }
+
+    return this.tokens;
 };
 
-/* AST Builder */
+Lexer.prototype.isNumber = function (ch) {
+    return '0' <= ch && ch <= '9';
+};
+Lexer.prototype.readNumber = function () {
+    var number = '';
+    while (this.index < this.text.length) {
+        var ch = this.text[this.index];
+        if (this.isNumber(ch)) {
+            number += ch;
+        } else {
+            break;
+        }
+        this.index++;
+    }
+    this.tokens.push({
+        text: number,
+        value: Number(number)
+    });
+};
+
+/********************** AST Builder **********************/
 function AST(lexer) {
     this.lexer = lexer;
 }
+AST.Program = 'Program';
+AST.Literal = 'Literal';
 
+/**
+ * expected to return:
+ * {
+ *     type: AST.Program,
+ *     body: {
+ *         type: AST.Literal,
+ *         value: 42
+ *     }
+ * }
+ */
 AST.prototype.ast = function (text) {
     this.tokens = this.lexer.lex(text);
+    return this.program();
+};
+AST.prototype.program = function () {
+    return {
+        type: AST.Program,
+        body: this.constant()
+    };
+};
+AST.prototype.constant = function () {
+    return {
+        type: AST.Literal,
+        value: this.tokens[0].value
+    };
 };
 
-/* AST Compiler */
+/********************** AST Compiler **********************/
 function ASTCompiler(astBuilder) {
     this.astBuilder = astBuilder;
 }
 
 ASTCompiler.prototype.compile = function (text) {
     var ast = this.astBuilder.ast(text);
+    this.state = {
+        body: []
+    };
+    this.recurse(ast);
+    /* jshint -W054 */
+    return new Function(this.state.body.join(''));
+    /* jshint +W054 */
+};
+ASTCompiler.prototype.recurse = function (ast) {
+    switch (ast.type) {
+        case AST.Program:
+            this.state.body.push('return ', this.recurse(ast.body), ';');
+            break;
+        case AST.Literal:
+            return ast.value;
+    }
 };
 
-/* Parser */
+/********************** Parser **********************/
 function Parser(lexer) {
     this.lexer = lexer;
     this.ast = new AST(this.lexer);
