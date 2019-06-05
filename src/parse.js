@@ -36,11 +36,11 @@ Lexer.prototype.lex = function (text) {
     while (this.index < this.text.length) {
         this.ch = this.text.charAt(this.index);
         if (this.isNumber(this.ch) || 
-            (this.ch === '.' && this.isNumber(this.peek()))) {
+            (this.is('.') && this.isNumber(this.peek()))) {
             this.readNumber();
-        } else if (this.ch === '\'' || this.ch === '"') {
+        } else if (this.is('\'"')) {
             this.readString(this.ch);
-        } else if (this.ch === '[' || this.ch === ']' || this.ch === ',') {
+        } else if (this.is('[],{}:')) {
             this.tokens.push({
                 text: this.ch
             });
@@ -139,6 +139,10 @@ Lexer.prototype.readString = function (quote) {
     throw 'Unmatched quote';
 };
 
+Lexer.prototype.is = function (chs) {
+    return chs.indexOf(this.ch) >= 0;
+};
+
 Lexer.prototype.isIdent = function (ch) {
     return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
         ch === '_' || ch === '$';
@@ -174,6 +178,7 @@ function AST(lexer) {
 AST.Program = 'Program';
 AST.Literal = 'Literal';
 AST.ArrayExpression = 'ArrayExpression';
+AST.ObjectExpression = 'ObjectExpression';
 AST.prototype.constants = {
     'null': { type: AST.Literal, value: null },
     'true': { type: AST.Literal, value: true },
@@ -203,6 +208,8 @@ AST.prototype.program = function () {
 AST.prototype.primary = function () {
     if (this.expect('[')) {
         return this.arrayDeclaration();
+    } else if (this.expect('{')) {
+        return this.object();
     } else if (this.constants.hasOwnProperty(this.tokens[0].text)) {
         return this.constants[this.consume().text];
     } else {
@@ -230,6 +237,13 @@ AST.prototype.expect = function (e) {
         return this.tokens.shift();
     }
 };
+AST.prototype.consume = function (e) {
+    var token = this.expect(e);
+    if (!token) {
+        throw 'Unexpected. Expecting' + e;
+    }
+    return token;
+};
 AST.prototype.arrayDeclaration = function () {
     var elements = [];
     if (!this.peek(']')) {
@@ -246,12 +260,11 @@ AST.prototype.arrayDeclaration = function () {
         elements: elements
     };
 };
-AST.prototype.consume = function (e) {
-    var token = this.expect(e);
-    if (!token) {
-        throw 'Unexpected. Expecting' + e;
-    }
-    return token;
+AST.prototype.object = function () {
+    this.consume('}');
+    return {
+        type: AST.ObjectExpression
+    };
 };
 
 /********************** AST Compiler **********************/
@@ -286,6 +299,8 @@ ASTCompiler.prototype.recurse = function (ast) {
                 return this.recurse(element);
             }, this);
             return '[' + elements.join(',') + ']';
+        case AST.ObjectExpression:
+            return '{}';
     }
 };
 ASTCompiler.prototype.escape = function (value) {

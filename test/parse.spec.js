@@ -115,4 +115,10 @@ describe("parse", function () {
         var fn = parse('[1, 2, 3, ]');
         expect(fn()).toEqual([1, 2, 3]);
     });
+
+    // Parsing Objects
+    it("will parse an empty object", function () {
+        var fn = parse('{}');
+        expect(fn()).toEqual({});
+    });
 });
