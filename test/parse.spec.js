@@ -311,4 +311,44 @@ describe("parse", function () {
         fn(scope);
         expect(scope.some.nested.property.path).toBe(42);
     });
+
+    // Ensuring Safely in Member Access
+    // `__proto__` && `__defineGetter__` && `lookupGetter__`
+    // `__defineSetter__` && `__lookupSetter`
+    it("does not allow calling the function constructor", function () {
+        expect(function () {
+            var fn = parse('aFunction.constructor("return window;")()');
+            fn({aFunction: function () {}});
+        }).toThrow();
+    });
+    it("does not allow accessing __proto__", function () {
+        expect(function () {
+            var fn = parse('obj.__proto__');
+            fn({obj: {}});
+        }).toThrow();
+    });
+    it("does not allow accessing __defineGetter__", function () {
+        expect(function () {
+            var fn = parse('obj.__defineGetter__("evil", fn)');
+            fn({obj: {}, fn: function () {}});
+        }).toThrow();
+    });
+    it("does not allow accessing __defineSetter__", function () {
+        expect(function () {
+            var fn = parse('obj.__defineSetter__("evil", fn)');
+            fn({obj: {}, fn: function () {}});
+        }).toThrow();
+    });
+    it("does not allow accessing __lookupGetter__", function () {
+        expect(function () {
+            var fn = parse('obj.__lookupGetter__("evil")');
+            fn({obj: {}});
+        }).toThrow();
+    });
+    it("does not allow accessing __lookupSetter__", function () {
+        expect(function () {
+            var fn = parse('obj.__lookupSetter__("evil")');
+            fn({obj: {}});
+        }).toThrow();
+    });
 });
