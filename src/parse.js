@@ -160,7 +160,8 @@ Lexer.prototype.readIdent = function () {
     }
 
     var token = {
-        text: text
+        text: text,
+        identifier: true
     };
 
     this.tokens.push(token);
@@ -179,6 +180,8 @@ AST.Program = 'Program';
 AST.Literal = 'Literal';
 AST.ArrayExpression = 'ArrayExpression';
 AST.ObjectExpression = 'ObjectExpression';
+AST.Property = 'Property';
+AST.Identifier = 'Identifier';
 AST.prototype.constants = {
     'null': { type: AST.Literal, value: null },
     'true': { type: AST.Literal, value: true },
@@ -261,9 +264,32 @@ AST.prototype.arrayDeclaration = function () {
     };
 };
 AST.prototype.object = function () {
+    var properties = [];
+    if (!this.peek('}')) {
+        do {
+            var property = {
+                type: AST.Property
+            };
+            if (this.peek().identifier) {
+                property.key = this.identifier();
+            } else {
+                property.key = this.constant();
+            }
+            this.consume(':');
+            property.value = this.primary();
+            properties.push(property);
+        } while (this.expect(','));
+    }
     this.consume('}');
     return {
-        type: AST.ObjectExpression
+        type: AST.ObjectExpression,
+        properties: properties
+    };
+};
+AST.prototype.identifier = function () {
+    return {
+        type: AST.Identifier,
+        name: this.consume().text
     };
 };
 
@@ -300,7 +326,14 @@ ASTCompiler.prototype.recurse = function (ast) {
             }, this);
             return '[' + elements.join(',') + ']';
         case AST.ObjectExpression:
-            return '{}';
+            var properties = _.map(ast.properties, function (property) {
+                var key = property.key.type === AST.Identifier ?
+                    property.key.name : 
+                    this.escape(property.key.value);
+                var value = this.recurse(property.value);
+                return key + ":" + value;
+            }, this);
+            return '{' + properties.join(',') + '}';
     }
 };
 ASTCompiler.prototype.escape = function (value) {
