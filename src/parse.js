@@ -215,6 +215,8 @@ AST.prototype.primary = function () {
         return this.object();
     } else if (this.constants.hasOwnProperty(this.tokens[0].text)) {
         return this.constants[this.consume().text];
+    } else if (this.peek().identifier) {
+        return this.identifier();
     } else {
         return this.constant();
     }
@@ -306,11 +308,16 @@ ASTCompiler.prototype.stringEscapeFn = function (c) {
 ASTCompiler.prototype.compile = function (text) {
     var ast = this.astBuilder.ast(text);
     this.state = {
-        body: []
+        body: [],
+        nextId: 0,
+        vars: []
     };
     this.recurse(ast);
     /* jshint -W054 */
-    return new Function(this.state.body.join(''));
+    return new Function('s', 
+        (this.state.vars.length ?
+            'var ' + this.state.vars.join(',') + ';' : ''
+        ) + this.state.body.join(''));
     /* jshint +W054 */
 };
 ASTCompiler.prototype.recurse = function (ast) {
@@ -334,7 +341,16 @@ ASTCompiler.prototype.recurse = function (ast) {
                 return key + ":" + value;
             }, this);
             return '{' + properties.join(',') + '}';
+        case AST.Identifier:
+            var intoId = this.nextId();
+            this._if('s',  this.assign(intoId, this.nonComputedMember('s', ast.name)));
+            return intoId;
     }
+};
+ASTCompiler.prototype.nextId = function () {
+    var id = 'v' + this.state.nextId++;
+    this.state.vars.push(id);
+    return id;
 };
 ASTCompiler.prototype.escape = function (value) {
     if (_.isString(value)) {
@@ -345,6 +361,16 @@ ASTCompiler.prototype.escape = function (value) {
     } else {
         return value;
     }
+};
+ASTCompiler.prototype.nonComputedMember = function (left, right) {
+    return '(' + left + ').' + right;
+};
+
+ASTCompiler.prototype.assign = function (id, value) {
+    return id + '=' + value + ';';
+};
+ASTCompiler.prototype._if = function (test, consequent) {
+    this.state.body.push('if(', test, '){', consequent, '}');
 };
 
 /********************** Parser **********************/
