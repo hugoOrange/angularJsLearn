@@ -148,4 +148,19 @@ describe("parse", function () {
         expect(fn(scope)).toBe(scope);
         expect(fn()).toBeUndefined();
     });
+
+    // Parsing Non-Computed Attribute Lookup
+    it("looks up a 2-part identifier path from the scope", function () {
+        var fn = parse('aKey.anotherKey');
+        expect(fn({aKey: {anotherKey: 42}})).toBe(42);
+        expect(fn({aKey: {}})).toBeUndefined();
+        expect(fn({})).toBeUndefined();
+    });
+    it("looks up a identifier path from the scope", function () {
+        var fn = parse('aKey.secondKey.thirdKey.fourthKey');
+        expect(fn({aKey: {secondKey: {thirdKey: {fourthKey: 42}}}})).toBe(42);
+        expect(fn({aKey: {secondKey: {thirdKey: {}}}})).toBeUndefined();
+        expect(fn({aKey: {}})).toBeUndefined();
+        expect(fn({})).toBeUndefined();
+    });
 });
