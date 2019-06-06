@@ -201,4 +201,38 @@ describe("parse", function () {
         var fn = parse('lock[key["aKey"]]');
         expect(fn({key: {aKey: 'theKey'}, lock: {theKey: 42}})).toBe(42);
     });
+
+    // Function Calls
+    it("parses a function call", function () {
+        var fn = parse('aFunction()');
+        expect(fn({aFunction: function () { return 42; }})).toBe(42);
+    });
+    it("parses a function call with a single number argument", function () {
+        var fn = parse('aFunction(42)');
+        expect(fn({aFunction: function (n) {
+            return n;
+        }})).toBe(42);
+    });
+    it("parses a function call with a single identifier argument", function () {
+        var fn = parse('aFunction(n)');
+        expect(fn({aFunction: function (arg) {
+            return arg;
+        }, n: 42})).toBe(42);
+    });
+    it("parses a function call with a single function call argument", function () {
+        var fn = parse('aFunction(argFn())');
+        expect(fn({aFunction: function (arg) {
+            return arg;
+        }, argFn: _.constant(42)})).toBe(42);
+    });
+    it("parses a function call with multiple argument", function () {
+        var fn = parse('aFunction(37, n, argFn())');
+        expect(fn({
+            n: 3,
+            argFn: _.constant(2),
+            aFunction: function (a1, a2, a3) {
+                return a1 + a2 + a3;
+            }
+        })).toBe(42);
+    });
 });
