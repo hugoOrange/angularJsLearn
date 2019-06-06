@@ -327,7 +327,7 @@ ASTCompiler.prototype.compile = function (text) {
     };
     this.recurse(ast);
     /* jshint -W054 */
-    return new Function('s', 
+    return new Function('s', 'l', 
         (this.state.vars.length ?
             'var ' + this.state.vars.join(',') + ';' : ''
         ) + this.state.body.join(''));
@@ -357,7 +357,10 @@ ASTCompiler.prototype.recurse = function (ast) {
             return '{' + properties.join(',') + '}';
         case AST.Identifier:
             intoId = this.nextId();
-            this._if('s',  this.assign(intoId, this.nonComputedMember('s', ast.name)));
+            this._if(this.getHasOwnProperty('l', ast.name),
+                this.assign(intoId, this.nonComputedMember('l', ast.name)));
+            this._if(this.not(this.getHasOwnProperty('l', ast.name)) + ' && s',
+                this.assign(intoId, this.nonComputedMember('s', ast.name)));
             return intoId;
         case AST.ThisExpression:
             return 's';
@@ -390,6 +393,12 @@ ASTCompiler.prototype.nonComputedMember = function (left, right) {
 
 ASTCompiler.prototype.assign = function (id, value) {
     return id + '=' + value + ';';
+};
+ASTCompiler.prototype.not = function (e) {
+    return '!(' + e + ')';
+};
+ASTCompiler.prototype.getHasOwnProperty = function (object, property) {
+    return object + '&&(' + this.escape(property) + ' in ' + object + ')';
 };
 ASTCompiler.prototype._if = function (test, consequent) {
     this.state.body.push('if(', test, '){', consequent, '}');
