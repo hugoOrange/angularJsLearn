@@ -15,7 +15,6 @@
  */
 
 
-
 function parse(expr) {
     var lexer = new Lexer();
     var parser = new Parser(lexer);
@@ -28,6 +27,15 @@ function ensureSafeMemberName(name) {
         name === '__lookupGetter__' || name === '__lookupSetter__') {
         throw 'Attemping to access a disallowed field in Angular expressions!';
     }
+}
+
+function ensureSafeObject(obj) {
+    if (obj) {
+        if (obj.document && obj.location && obj.alert && obj.setInterval) {
+            throw 'Referencing window in Angular expressions is disallowed';
+        }
+    }
+    return obj;
 }
 
 /********************** Lexer **********************/
@@ -378,7 +386,12 @@ ASTCompiler.prototype.compile = function (text) {
         this.state.body.join('') +
         '}; return fn;';
     /* jshint -W054 */
-    return new Function('ensureSafeMemberName', fnString)(ensureSafeMemberName);
+    return new Function(
+        'ensureSafeMemberName',
+        'ensureSafeObject',
+        fnString)(
+            ensureSafeMemberName,
+            ensureSafeObject);
     /* jshint +W054 */
 };
 ASTCompiler.prototype.recurse = function (ast, context, create) {
@@ -437,7 +450,7 @@ ASTCompiler.prototype.recurse = function (ast, context, create) {
                         this.assign(this.computedMember(left, right), '{}'));
                 }
                 this._if(left,
-                    this.assign(intoId, this.computedMember(left, right)));
+                    this.assign(intoId, 'ensureSafeObject(' + this.computedMember(left, right) + ')'));
                 if (context) {
                     context.name = right;
                     context.computed = true;
@@ -449,7 +462,9 @@ ASTCompiler.prototype.recurse = function (ast, context, create) {
                         this.assign(this.nonComputedMember(left, ast.property.name), '{}'));
                 }
                 this._if(left,
-                    this.assign(intoId, this.nonComputedMember(left, ast.property.name)));
+                    this.assign(intoId, 
+                        'ensureSafeObject(' +
+                            this.nonComputedMember(left, ast.property.name) + ')'));
                 if (context) {
                     context.name = ast.property.name;
                     context.computed = false;
@@ -460,7 +475,7 @@ ASTCompiler.prototype.recurse = function (ast, context, create) {
             var callContext = {};
             var callee = this.recurse(ast.callee, callContext);
             var args = _.map(ast.arguments, function (arg) {
-                return this.recurse(arg);
+                return 'ensureSafeObject(' + this.recurse(arg) + ')';
             }, this);
             if (callContext.name) {
                 if (callContext.computed) {
