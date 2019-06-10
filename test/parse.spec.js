@@ -375,4 +375,55 @@ describe("parse", function () {
             });
         }).toThrow();
     });
+    it("does not allow calling methods on window", function () {
+        var fn = parse("wnd.scrollTo(0)");
+        expect(function () {
+            fn({wnd: window});
+        }).toThrow();
+    });
+    it("does not allow function to return window", function () {
+        var fn = parse('getWnd()');
+        expect(function () {
+            fn({
+                getWnd: _.constant(window)
+            });
+        }).toThrow();
+    });
+    it("does not allow assigning window", function () {
+        var fn = parse('wnd = anObject');
+        expect(function () {
+            fn({anObject: window});
+        }).toThrow();
+    });
+    it("does not allow referencing window", function () {
+        var fn = parse('wnd');
+        expect(function () {
+            fn({wnd: window});
+        }).toThrow();
+    });
+    it("does not allow calling functions on DOM elements", function () {
+        var fn = parse("el.setAttribute('evil', 'true')");
+        expect(function () {
+            fn({
+                el: document.documentElement
+            });
+        }).toThrow();
+    });
+    it("does not allow calling the aliased function constructor", function () {
+        var fn = parse('fnConstructor("return window;")');
+        expect(function () {
+            fn({
+                fnConstructor: (function () {
+                }).constructor
+            });
+        }).toThrow();
+    });
+    it("does not allow calling function on Object", function () {
+        var fn = parse('obj.create({})');
+        expect(function () {
+            fn({
+                obj: Object
+            });
+        }).toThrow();
+    });
 });
