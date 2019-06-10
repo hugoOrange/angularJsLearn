@@ -30,6 +30,11 @@
  * 4. add reading rule in the AST Builder
  * 5. recurse the AST and build the final expression in AST Compiler according the type
  * (may invoke recurse() in the cycle)
+ * 
+ * Add safe checking:
+ * 1. add the safe checking function as an argument in output function
+ * 2. add the safe checking function in the process of compiling AST
+ * (may in the literal, may in the call of the function or objects)
  */
 
 
