@@ -530,4 +530,46 @@ describe("parse", function () {
     it("parses additives on a higher precedence than relationals", function () {
         expect(parse('2 + 3 < 6 - 2')()).toBe(false);
     });
+
+    // Parsing Logical Operators AND and OR
+    it("parse logical AND", function () {
+        expect(parse('true && true')()).toBe(true);
+        expect(parse('true && false')()).toBe(false);
+     });
+    it("parse logical OR", function () {
+        expect(parse('true || true')()).toBe(true);
+        expect(parse('true || false')()).toBe(true);
+        expect(parse('false || false')()).toBe(false);
+    });
+    it("parse multiple AND", function () {
+        expect(parse('true && true && true')()).toBe(true);
+        expect(parse('true && true && false')()).toBe(false);
+    });
+    it("parse multiple OR", function () {
+        expect(parse('true || true || true')()).toBe(true);
+        expect(parse('true || true || false')()).toBe(true);
+        expect(parse('false || false || false')()).toBe(false);
+    });
+    it("short-circuits AND", function () {
+        var invoked;
+        var scope = {fn: function () { invoked = true; }};
+
+        parse('false && fn()')(scope);
+        
+        expect(invoked).toBeUndefined();
+    });
+    it("short-circuits OR", function () {
+        var invoked;
+        var scope = {fn: function () { invoked = true; }};
+
+        parse('true || fn()')(scope);
+
+        expect(invoked).toBeUndefined();
+    });
+    it("parse AND with a higher precedence than OR", function () {
+        expect(parse('false && true || true')()).toBe(true);
+    });
+    it("parse OR with a lower precedence than equality", function () {
+        expect(parse('1 === 2 || 2 === 2')()).toBeTruthy();
+    });
 });
