@@ -449,7 +449,7 @@ describe("parse", function () {
         }).toThrow();
     });
 
-    // Unary Operator
+    // Parsing Unary Operator
     it("parses a unary +", function () {
         expect(parse('+43')()).toBe(43);
         expect(parse('+a')({a: 42})).toBe(42);
@@ -471,5 +471,19 @@ describe("parse", function () {
     });
     it("parses a ! in a string", function () {
         expect(parse('"!"')()).toBe('!');
+    });
+
+    // Parsing Multiplicative Operators
+    it("parses a multiplication", function () {
+        expect(parse('21 * 2')()).toBe(42);
+    });
+    it("parses a division", function () {
+        expect(parse('84 / 2')()).toBe(42);
+    });
+    it("parses a remainder", function () {
+        expect(parse('85 % 43')()).toBe(42);
+    });
+    it("parses serveral multiplicatives", function () {
+        expect(parse('36 * 2 % 5')()).toBe(2);
     });
 });
