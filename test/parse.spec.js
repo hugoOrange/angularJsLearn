@@ -434,8 +434,7 @@ describe("parse", function () {
         var fn = parse('fun.call(obj)');
         expect(function () {
             fn({
-                fnConstructor: (function () {
-                }),
+                fnConstructor: function () { },
                 obj: {}
             });
         }).toThrow();
@@ -444,10 +443,33 @@ describe("parse", function () {
         var fn = parse('fun.apply(obj)');
         expect(function () {
             fn({
-                fnConstructor: (function () {
-                }),
+                fnConstructor: function () { },
                 obj: {}
             });
         }).toThrow();
+    });
+
+    // Unary Operator
+    it("parses a unary +", function () {
+        expect(parse('+43')()).toBe(43);
+        expect(parse('+a')({a: 42})).toBe(42);
+    });
+    it("replaces undefined with zero for unary +", function () {
+        expect(parse('+a')({})).toBe(0);
+    });
+    it("parses a unary !", function () {
+        expect(parse('!true')()).toBe(false);
+        expect(parse('!42')()).toBe(false);
+        expect(parse('!a')({a: false})).toBe(true);
+        expect(parse('!!a')({a: false})).toBe(false);
+    });
+    it("parses a unary -", function () {
+        expect(parse('-42')()).toBe(-42);
+        expect(parse('-a')({a: -42})).toBe(42);
+        expect(parse('--a')({a: -42})).toBe(-42);
+        expect(parse('-a')({})).toBe(0);
+    });
+    it("parses a ! in a string", function () {
+        expect(parse('"!"')()).toBe('!');
     });
 });
