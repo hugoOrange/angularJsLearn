@@ -426,4 +426,28 @@ describe("parse", function () {
             });
         }).toThrow();
     });
+    
+    // Ensuring Safe Functions
+    /* Since rebinding `this` can cause functions to behvae differently than the
+     * function author originally intended, Angular simply disallows them in expressions. */
+    it("does not allow calling call", function () {
+        var fn = parse('fun.call(obj)');
+        expect(function () {
+            fn({
+                fnConstructor: (function () {
+                }),
+                obj: {}
+            });
+        }).toThrow();
+    });
+    it("does not allow calling apply", function () {
+        var fn = parse('fun.apply(obj)');
+        expect(function () {
+            fn({
+                fnConstructor: (function () {
+                }),
+                obj: {}
+            });
+        }).toThrow();
+    });
 });
