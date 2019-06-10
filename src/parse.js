@@ -14,6 +14,25 @@
  * not mentioned: [character bookkeeping] & [HTML Content Security Policy]
  */
 
+/**
+ * Add literal parsing:
+ * 1. add estimating rule in the lexer
+ * 2. add reading rule in the lexer
+ * 3. add estimating rule in the AST Builder
+ * 4. add reading rule in the AST Builder
+ * 5. recurse the AST and build the final expression in AST Compiler according the type
+ * 
+ * Add object / attributes and array / items definition parsing:
+ * 1. add estimating rule in the lexer
+ * 2. add reading rule in the lexer
+ * 3. add estimating rule in the AST Builder after the simple expression
+ * (this will make the the AST into a tree)
+ * 4. add reading rule in the AST Builder
+ * 5. recurse the AST and build the final expression in AST Compiler according the type
+ * (may invoke recurse() in the cycle)
+ */
+
+
 
 function parse(expr) {
     var lexer = new Lexer();
