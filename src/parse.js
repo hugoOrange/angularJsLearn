@@ -290,6 +290,20 @@ AST.prototype.ast = function (text) {
     this.tokens = this.lexer.lex(text);
     return this.program();
 };
+/**
+ * Compile the lexer incrementally:
+ * 1. program
+ * 2. assignment
+ * 3. additive
+ * 4. multiplicative
+ * 5. unary
+ * 6. primary
+ * 7. '[' or '(' or '.'
+ * and the priority is just the opposite:
+ * program < assignment(=) < additive(+-) <
+ * multiplicative(*%/) < unary(+-) < primary <
+ * '[' or '(' or '.'
+ */
 AST.prototype.program = function () {
     return {
         type: AST.Program,
@@ -297,9 +311,9 @@ AST.prototype.program = function () {
     };
 };
 AST.prototype.assignment = function () {
-    var left = this.multiplicative();
+    var left = this.additive();
     if (this.expect('=')) {
-        var right = this.multiplicative();
+        var right = this.additive();
         return {
             type: AST.AssignmentExpression,
             left: left,
@@ -307,6 +321,44 @@ AST.prototype.assignment = function () {
         };
     }
     return left;
+};
+AST.prototype.additive = function () {
+    var left = this.multiplicative();
+    var token;
+    while ((token = this.expect('+')) || (token = this.expect('-'))) {
+        left = {
+            type: AST.BinaryExpression,
+            operator: token.text,
+            left: left,
+            right: this.multiplicative()
+        };
+    }
+    return left;
+};
+AST.prototype.multiplicative = function () {
+    var left = this.unary();
+    var token;
+    while ((token = this.expect('*', '/', '%'))) {
+        left = {
+            type: AST.BinaryExpression,
+            operator: token.text,
+            left: left,
+            right: this.unary()
+        };
+    }
+    return left;
+};
+AST.prototype.unary = function () {
+    var token;
+    if ((token = this.expect('+', '!', '-'))) {
+        return {
+            type: AST.UnaryExpression,
+            operator: token.text,
+            argument: this.unary()
+        };
+    } else {
+        return this.primary();
+    }
 };
 AST.prototype.primary = function () {
     var primary;
@@ -432,31 +484,6 @@ AST.prototype.parseArguments = function () {
         } while (this.expect(','));
     }
     return args;
-};
-AST.prototype.unary = function () {
-    var token;
-    if ((token = this.expect('+', '!', '-'))) {
-        return {
-            type: AST.UnaryExpression,
-            operator: token.text,
-            argument: this.unary()
-        };
-    } else {
-        return this.primary();
-    }
-};
-AST.prototype.multiplicative = function () {
-    var left = this.unary();
-    var token;
-    while ((token = this.expect('*', '/', '%'))) {
-        left = {
-            type: AST.BinaryExpression,
-            operator: token.text,
-            left: left,
-            right: this.unary()
-        };
-    }
-    return left;
 };
 
 /********************** AST Compiler **********************/
@@ -607,9 +634,14 @@ ASTCompiler.prototype.recurse = function (ast, context, create) {
             return ast.operator +
                 '(' + this.ifDefined(this.recurse(ast.argument), 0) + ')';
         case AST.BinaryExpression:
-            return '(' + this.recurse(ast.left) + ')'
-                + ast.operator + 
-                '(' + this.recurse(ast.right) + ')';
+            if (ast.operator === '+' || ast.operator === '-') {
+                return '(' + this.ifDefined(this.recurse(ast.left), 0) + ')'+ ast.operator +
+                    '(' + this.ifDefined(this.recurse(ast.right), 0) + ')';
+            } else {
+                return '(' + this.recurse(ast.left) + ')'+ ast.operator +
+                    '(' + this.recurse(ast.right) + ')';
+            }
+            break;
     }
 };
 ASTCompiler.prototype.nextId = function () {

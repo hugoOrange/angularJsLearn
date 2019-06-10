@@ -486,4 +486,24 @@ describe("parse", function () {
     it("parses serveral multiplicatives", function () {
         expect(parse('36 * 2 % 5')()).toBe(2);
     });
+
+    // Parsing Additive Operators
+    it("parses an addition", function () {
+        expect(parse('20 + 22')()).toBe(42);
+    });
+    it("parses a subtraction", function () {
+        expect(parse('42 - 22')()).toBe(20);
+    });
+    it("parses multiplicatives on a higher precedence than additives", function () {
+        expect(parse('2 + 3 * 5')()).toBe(17);
+        expect(parse('2 + 3 * 2 + 3')()).toBe(11);
+    });
+    it("sustitues undefined with zero in addition", function () {
+        expect(parse('a + 22')()).toBe(22);
+        expect(parse('42 + a')()).toBe(42);
+    });
+    it("sustitues undefined with zero in subtraction", function () {
+        expect(parse('a - 22')()).toBe(-22);
+        expect(parse('42 - a')()).toBe(42);
+    });
 });
