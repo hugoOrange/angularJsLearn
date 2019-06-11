@@ -69,4 +69,49 @@ describe("filter filter", function () {
             [{name: 'John'}, {name: 'Mary'}],
         ]);
     });
+
+    // Filtering With Other Primitives
+    it("filters with a number", function () {
+        var fn = parse ('arr | filter: 42');
+        expect(fn({
+            arr: [
+                {name: 'John', age: 42},
+                {name: 'Jane', age: 43},
+                {name: 'Mary', age: 44}
+            ]
+        })).toEqual([
+            {name: 'John', age: 42}
+        ]);
+    });
+    it("filters with a number", function () {
+        var fn = parse ('arr | filter: true');
+        expect(fn({
+            arr: [
+                {name: 'John', admin: true},
+                {name: 'Jane', admin: true},
+                {name: 'Mary', admin: false}
+            ]
+        })).toEqual([
+            {name: 'John', admin: true},
+            {name: 'Jane', admin: true}
+        ]);
+    });
+    it("filters with a substring numberic value", function () {
+        var fn = parse('arr | filter: 42');
+        expect(fn({
+            arr: ['containers 42']
+        })).toEqual(['containers 42']);
+    });
+    it("filters matching null", function () {
+        var fn = parse('arr | filter: null');
+        expect(fn({
+            arr: [null, 'not null']
+        })).toEqual([null]);
+    });
+    it("does not match undefined values", function () {
+        var fn = parse('arr | filter: "undefined"');
+        expect(fn({
+            arr: [undefined, 'undefined']
+        })).toEqual(["undefined"]);
+    });
 });
