@@ -133,7 +133,7 @@ Lexer.prototype.lex = function (text) {
             this.readNumber();
         } else if (this.is('\'"')) {
             this.readString(this.ch);
-        } else if (this.is('[],{}:.()')) {
+        } else if (this.is('[],{}:.()?')) {
             this.tokens.push({
                 text: this.ch
             });
@@ -298,6 +298,7 @@ AST.AssignmentExpression = 'AssignmentExpression';
 AST.UnaryExpression = 'UnaryExpression';
 AST.BinaryExpression = 'BinaryExpression';
 AST.LogicalExpression = 'LogicalExpression';
+AST.ConditionExpression = 'ConditionExpression';
 AST.prototype.constants = {
     'null': { type: AST.Literal, value: null },
     'true': { type: AST.Literal, value: true },
@@ -311,17 +312,16 @@ AST.prototype.ast = function (text) {
 };
 /**
  * Compile the lexer incrementally:
- * 1. program
- * 2. assignment
- * 3. logicalOR
- * 4. logicalAND
- * 5. equality
- * 6. relational
- * 7. additive
- * 8. multiplicative
- * 9. unary
- * 10. primary
- * 11. '[' or '(' or '.'
+ * 1. Program
+ * 2. Assignment: a = b
+ * 3. LogicalOR: a || b
+ * 4. LogicalAND: a && b
+ * 5. Equality: a == b, a != b, a === b, a !== b
+ * 6. Relational: a < b, a > b, a <= b, a >= b
+ * 7. Additive: a + b, a - b
+ * 8. Multiplicative: a * b, a / b, a % b
+ * 9. Unary: +a, -a, !a
+ * 10. Primary(Lookups, function calls, method calls): a.b, a["b"], a(), a.b(), a["b"]()
  * and the priority is just the opposite:
  * program < assignment(=) < additive(+-) <
  * multiplicative(*%/) < unary(+-) < primary <
@@ -334,9 +334,9 @@ AST.prototype.program = function () {
     };
 };
 AST.prototype.assignment = function () {
-    var left = this.logicalOR();
+    var left = this.ternary();
     if (this.expect('=')) {
-        var right = this.logicalOR();
+        var right = this.ternary();
         return {
             type: AST.AssignmentExpression,
             left: left,
@@ -344,6 +344,22 @@ AST.prototype.assignment = function () {
         };
     }
     return left;
+};
+AST.prototype.ternary = function () {
+    var test = this.logicalOR();
+    if (this.expect('?')) {
+        var consequent = this.assignment();
+        if (this.consume(':')) {
+            var alternate = this.assignment();
+            return {
+                type: AST.ConditionExpression,
+                test: test,
+                consequent: consequent,
+                alternate: alternate
+            };
+        }
+    }
+    return test;
 };
 AST.prototype.logicalOR = function () {
     var left = this.logicalAND();
@@ -601,7 +617,7 @@ ASTCompiler.prototype.compile = function (text) {
     /* jshint +W054 */
 };
 ASTCompiler.prototype.recurse = function (ast, context, create) {
-    var intoId;
+    var intoId, testId;
     switch (ast.type) {
         case AST.Program:
             this.state.body.push('return ', this.recurse(ast.body), ';');
@@ -727,6 +743,15 @@ ASTCompiler.prototype.recurse = function (ast, context, create) {
             this.state.body.push(this.assign(intoId, this.recurse(ast.left)));
             this._if(ast.operator === '&&' ? intoId : this.not(intoId),
                 this.assign(intoId, this.recurse(ast.right)));
+            return intoId;
+        case AST.ConditionExpression:
+            intoId = this.nextId();
+            testId = this.nextId();
+            this.state.body.push(this.assign(testId, this.recurse(ast.test)));
+            this._if(testId,
+                this.assign(intoId, this.recurse(ast.consequent)));
+            this._if(this.not(testId),
+                this.assign(intoId, this.recurse(ast.alternate)));
             return intoId;
     }
 };
