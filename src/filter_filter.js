@@ -40,6 +40,9 @@ function createPredicateFn(expression) {
 
 // compare two primitive values or an object of primitives to a primitive
 function deepCompare(actual, expected, comparator) {
+    if (_.isString(expected) && _.startsWith(expected, '!')) {
+        return !deepCompare(actual, expected.substring(1), comparator);
+    }
     if (_.isObject(actual)) {
         return _.some(actual, function (value) {
             return deepCompare(value, expected, comparator);
