@@ -619,4 +619,20 @@ describe("parse", function () {
         var fn = parse('aString | upcase');
         expect(fn({aString: 'Hello'})).toEqual('HELLO');
     });
+
+    // Filter Chain Expression
+    it("can parse filter chain expression", function () {
+        register('upcase', function () {
+            return function (str) {
+                return str.toUpperCase();
+            };
+        });
+        register('exclamate', function () {
+            return function (str) {
+                return str + '!';
+            };
+        });
+        var fn = parse('"hello" | upcase | exclamate');
+        expect(fn()).toEqual('HELLO!');
+    });
 });
