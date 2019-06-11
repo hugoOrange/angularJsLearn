@@ -321,11 +321,10 @@ AST.prototype.ast = function (text) {
  * 7. Additive: a + b, a - b
  * 8. Multiplicative: a * b, a / b, a % b
  * 9. Unary: +a, -a, !a
- * 10. Primary(Lookups, function calls, method calls): a.b, a["b"], a(), a.b(), a["b"]()
+ * 10. Primary(Parentthese, Lookups, function calls, method calls): a*(b+c), a.b, a["b"], a(), a.b(), a["b"]()
  * and the priority is just the opposite:
- * program < assignment(=) < additive(+-) <
- * multiplicative(*%/) < unary(+-) < primary <
- * '[' or '(' or '.'
+ **** Program < Assignment < LogicalOR < LogicalAND < Equality     ***
+ ****  < Relational < Additive < Multiplicative < Unary < Primary  ***
  */
 AST.prototype.program = function () {
     var body = [];
@@ -748,8 +747,7 @@ ASTCompiler.prototype.recurse = function (ast, context, create) {
             }
             break;
         case AST.LogicalExpression:
-            /* 
-             * It may seems confusing, the compiling processing may like below(shorthand): 
+            /* It may seems confusing, the compiling processing may like below(shorthand): 
              * a && b   =>   v1 = a;v2 = b; if (v1) {v1=v2;} return v1;
              * a || b   =>   v1 = a;v2 = b; if (!v1) {v1=v2;} return v1;
              */
