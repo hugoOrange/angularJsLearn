@@ -313,11 +313,15 @@ AST.prototype.ast = function (text) {
  * Compile the lexer incrementally:
  * 1. program
  * 2. assignment
- * 3. additive
- * 4. multiplicative
- * 5. unary
- * 6. primary
- * 7. '[' or '(' or '.'
+ * 3. logicalOR
+ * 4. logicalAND
+ * 5. equality
+ * 6. relational
+ * 7. additive
+ * 8. multiplicative
+ * 9. unary
+ * 10. primary
+ * 11. '[' or '(' or '.'
  * and the priority is just the opposite:
  * program < assignment(=) < additive(+-) <
  * multiplicative(*%/) < unary(+-) < primary <
@@ -714,6 +718,11 @@ ASTCompiler.prototype.recurse = function (ast, context, create) {
             }
             break;
         case AST.LogicalExpression:
+            /* 
+             * It may seems confusing, the compiling processing may like below(shorthand): 
+             * a && b   =>   v1 = a;v2 = b; if (v1) {v1=v2;} return v1;
+             * a || b   =>   v1 = a;v2 = b; if (!v1) {v1=v2;} return v1;
+             */
             intoId = this.nextId();
             this.state.body.push(this.assign(intoId, this.recurse(ast.left)));
             this._if(ast.operator === '&&' ? intoId : this.not(intoId),
