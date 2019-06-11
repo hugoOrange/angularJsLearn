@@ -315,18 +315,19 @@ AST.prototype.ast = function (text) {
 /**
  * Compile the lexer incrementally:
  * 1. Program
- * 2. Assignment: a = b
- * 3. LogicalOR: a || b
- * 4. LogicalAND: a && b
- * 5. Equality: a == b, a != b, a === b, a !== b
- * 6. Relational: a < b, a > b, a <= b, a >= b
- * 7. Additive: a + b, a - b
- * 8. Multiplicative: a * b, a / b, a % b
- * 9. Unary: +a, -a, !a
- * 10. Primary(Parentthese, Lookups, function calls, method calls): a*(b+c), a.b, a["b"], a(), a.b(), a["b"]()
+ * 2. Filter: a | fn: p1
+ * 3. Assignment: a = b
+ * 4. LogicalOR: a || b
+ * 5. LogicalAND: a && b
+ * 6. Equality: a == b, a != b, a === b, a !== b
+ * 7. Relational: a < b, a > b, a <= b, a >= b
+ * 8. Additive: a + b, a - b
+ * 9. Multiplicative: a * b, a / b, a % b
+ * 10. Unary: +a, -a, !a
+ * 11. Primary(Parentthese, Lookups, function calls, method calls): a*(b+c), a.b, a["b"], a(), a.b(), a["b"]()
  * and the priority is just the opposite:
- **** Program < Assignment < LogicalOR < LogicalAND < Equality     ***
- ****  < Relational < Additive < Multiplicative < Unary < Primary  ***
+ **** Program < Filter < Assignment < LogicalOR < LogicalAND < Equality ***
+ **** < Relational < Additive < Multiplicative < Unary < Primary        ***
  */
 AST.prototype.program = function () {
     var body = [];
