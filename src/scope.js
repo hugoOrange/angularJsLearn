@@ -1,4 +1,5 @@
 /* jshint globalstrict: true  */
+/* global parse: false */
 "use strict";
 
 /*
@@ -78,7 +79,7 @@ Scope.prototype.$clearPhase = function () {
 Scope.prototype.$watch = function (watchFn, listenerFn, valueEq) {
     var self = this;
     var watcher = {
-        watchFn: watchFn,
+        watchFn: parse(watchFn),
         listenerFn: listenerFn || function () { },
         valueEq: !!valueEq,
         last: initWatchVal
@@ -150,6 +151,8 @@ Scope.prototype.$watchCollection = function (watchFn, listenerFn) {
     var trackVeryOldValue = (listenerFn.length > 1);
     var changeCount = 0;
     var firstRun = true;
+    
+    watchFn = parse(watchFn);
     
     var internalWatchFn = function (scope) {
         var newLength;
@@ -334,7 +337,7 @@ Scope.prototype.$digest = function () {
 // Execution with the context of the scope
 // can be run inside or outside the $digest
 Scope.prototype.$eval = function (expr, locals) {
-    return expr(this, locals);
+    return parse(expr)(this, locals);
 };
 
 // Deferred execution('$eval') in listener

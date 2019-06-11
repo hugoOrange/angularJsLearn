@@ -636,7 +636,7 @@ describe("Scope", function () {
             scope.$digest();
             expect(scope.counter).toBe(1);
         });
-        /* $evalAsync $applyAsync $postDiges : are all used to execute in relation to the digest loop
+        /* $evalAsync $applyAsync $postDigest : are all used to execute in relation to the digest loop
         * In none of them do we want an exception to cause the loop to end prematurely. */
         it("catches exceptions in $evalAsync", function (done) {
             scope.aValue = 'abc';
@@ -810,6 +810,42 @@ describe("Scope", function () {
             expect(scope.counter).toBe(1);
         });
 
+        // Intergrating Expressions to Scopes
+        it("accepts expressions for watch functions", function () {
+            var theValue;
+    
+            scope.aValue = 42;
+            scope.$watch('aValue', function (newVal, oldVal, scope) {
+                theValue = newVal;
+            });
+            scope.$digest();
+    
+            expect(theValue).toBe(42);
+        });
+        it("accepts expressions in $eval", function () {
+            expect(scope.$eval('42')).toBe(42);
+        });
+        it("accepts expressions in $apply", function () {
+            var theValue;
+            scope.aFunction = function () {
+                theValue = 42;
+            };
+            scope.$apply('aFunction()');
+            expect(theValue).toBe(42);
+        });
+        it("accepts expressions in $evalAsync", function (done) {
+            var called;
+            scope.aFunction = function () {
+                called = true;
+            };
+
+            scope.$evalAsync('aFunction()');
+
+            scope.$$postDigest(function () {
+                expect(called).toBe(true);
+                done();
+            });
+        });
     });
 
     // add '$watchGroup' Watching Serveral Changes With One Listener
@@ -1799,6 +1835,19 @@ describe("Scope", function () {
             scope.$digest();
 
             expect(oldValueGiven).toEqual({ a: 1, b: 2 });
+        });
+
+        // Integrating Expressions to Scope
+        it("accepts expressions for watch functions", function () {
+            var theValue;
+
+            scope.aColl = [1, 2, 3];
+            scope.$watchCollection('aColl', function (newVal, oldVal, scope) {
+                theValue = newVal;
+            });
+            scope.$digest();
+
+            expect(theValue).toEqual([1, 2, 3]);
         });
     });
 
