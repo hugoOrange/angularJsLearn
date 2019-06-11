@@ -590,4 +590,11 @@ describe("parse", function () {
             })
         ).toEqual('c');
     });
+
+    // Altering The Precedence Order With Parentheses
+    it("parses parenttheses altering precedence order", function () {
+        expect(parse('21 * (3 - 1)')()).toBe(42);
+        expect(parse('false && (true || true)')()).toBe(false);
+        expect(parse('-((a % 2) === 0 ? 1 : 2')({a: 42})).toBe(-1);
+    });
 });
