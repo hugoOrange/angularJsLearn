@@ -53,12 +53,89 @@ function parse(expr) {
         case 'string':
             var lexer = new Lexer();
             var parser = new Parser(lexer);
-            return parser.parse(expr);       
+            var oneTime = false;
+            if (expr.charAt(0) === ':' && expr.charAt(1) === ':') {
+                oneTime = true;
+                expr = expr.substring(2);
+            }
+            var parseFn = parser.parse(expr);
+            if (parseFn.constant) {
+                parseFn.$$watchDelegate = constantWatchDelegate;
+            } else if (oneTime) {
+                parseFn.$$watchDelegate = parseFn.literal ? oneTimeLiteralWatchDelegate :
+                    oneTimeWatchDelegate;
+            }
+            return parseFn;
         case 'function':
             return expr;
         default:
             return _.noop;
     }
+}
+
+function constantWatchDelegate(scope, listenerFn, valueEq, watchFn) {
+    var unwatch = scope.$watch(
+        function () {
+            return watchFn(scope);
+        },
+        function (newVal, oldVal, scope) {
+            if (_.isFunction(listenerFn)) {
+                listenerFn.apply(this, arguments);
+            }
+            unwatch();
+        },
+        valueEq
+    );
+    return unwatch;
+}
+
+function oneTimeWatchDelegate(scope, listenerFn, valueEq, watchFn) {
+    var lastValue;
+    var unwatch = scope.$watch(
+        function () {
+            return watchFn(scope);
+        },
+        function (newVal, oldVal, scope) {
+            lastValue = newVal;
+            if (_.isFunction(listenerFn)) {
+                listenerFn.apply(this, arguments);
+            }
+            if (!_.isUndefined(newVal)) {
+                scope.$$postDigest(function () {
+                    if (!_.isUndefined(lastValue)) {
+                        unwatch();
+                    }
+                });
+            }
+        },
+        valueEq
+    );
+    return unwatch;
+}
+
+function oneTimeLiteralWatchDelegate(scope, listenerFn, valueEq, watchFn) {
+    function isAllDefined(val) {
+        return !_.any(val, _.isUndefined);
+    }
+    var unwatch = scope.$watch(
+        function () {
+            return watchFn(scope);
+        },
+        function (newVal, oldVal, scope) {
+            if (_.isFunction(listenerFn)) {
+                listenerFn.apply(this, arguments);
+            }
+            if (isAllDefined(newVal)) {
+                scope.$$postDigest(function () {
+                    if (isAllDefined(newVal)) {
+                        unwatch();
+                    }
+                });
+            }
+        },
+        valueEq
+    );
+    return unwatch;
 }
 
 function ensureSafeMemberName(name) {
