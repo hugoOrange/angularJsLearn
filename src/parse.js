@@ -626,6 +626,7 @@ ASTCompiler.prototype.stringEscapeFn = function (c) {
 
 ASTCompiler.prototype.compile = function (text) {
     var ast = this.astBuilder.ast(text);
+    markConstantExpression(ast);
     this.state = {
         body: [],
         nextId: 0,
@@ -642,7 +643,7 @@ ASTCompiler.prototype.compile = function (text) {
         this.state.body.join('') +
         '}; return fn;';
     /* jshint -W054 */
-    return new Function(
+    var fn = new Function(
         'ensureSafeMemberName',
         'ensureSafeObject',
         'ensureSafeFunction',
@@ -655,6 +656,13 @@ ASTCompiler.prototype.compile = function (text) {
             ifDefined,
             filter);
     /* jshint +W054 */
+    /**
+     * literal: whether the expression is a literal value
+     * constant: whether the expression can be a literal value by calculation
+     */
+    fn.literal = isLiteral(ast);
+    fn.constant = ast.constant;
+    return fn;
 };
 ASTCompiler.prototype.filterPrefix = function () {
     if (_.isEmpty(this.state.filters)) {
@@ -872,6 +880,90 @@ ASTCompiler.prototype.filter = function (name) {
     }
     return this.state.filters[name];
 };
+
+function isLiteral(ast) {
+    return ast.body.length === 0 ||
+        ast.body.length === 1 && (
+            ast.body[0].type === AST.Literal ||
+            ast.body[0].type === AST.ArrayExpression ||
+            ast.body[0].type === AST.ObjectExpression
+        );
+}
+function markConstantExpression(ast) {
+    var allConstants;
+    switch (ast.type) {
+        case AST.Program:
+            allConstants = true;
+            _.forEach(ast.body, function (expr) {
+                markConstantExpression(expr);
+                allConstants = allConstants && expr.constant;
+            });
+            ast.constant = allConstants;
+            break;
+        case AST.ArrayExpression:
+            allConstants = true;
+            _.forEach(ast.elements, function (element) {
+                markConstantExpression(element);
+                allConstants = allConstants && element.constant;
+            });
+            ast.constant = allConstants;
+            break;
+        case AST.ObjectExpression:
+            allConstants = true;
+            _.forEach(ast.properties, function (property) {
+                markConstantExpression(property.value);
+                allConstants = allConstants && property.value.constant;
+            });
+            ast.constant = allConstants;
+            break;
+        case AST.MemberExpression:
+            markConstantExpression(ast.object);
+            if (ast.computed) {
+                markConstantExpression(ast.property);
+            }
+            ast.constant = ast.object.constant &&
+                (!ast.computed || ast.property.constant);
+            break;
+        case AST.CallExpression:
+            allConstants = ast.filter ? true : false;
+            _.forEach(ast.arguments, function (arg) {
+                markConstantExpression(arg);
+                allConstants = allConstants && arg.constant;
+            });
+            ast.constant = allConstants;
+            break;
+        case AST.Literal:
+            ast.constant = true;
+            break;
+        case AST.ThisExpression:
+            ast.constant = false;
+            break;
+        case AST.Identifier:
+            ast.constant = false;
+            break;
+        case AST.AssignmentExpression:
+            markConstantExpression(ast.left);
+            markConstantExpression(ast.right);
+            ast.constant = ast.left.constant && ast.right.constant;
+            break;
+        case AST.UnaryExpression:
+            markConstantExpression(ast.argument);
+            ast.constant = ast.argument.constant;
+            break;
+        case AST.BinaryExpression:
+        case AST.LogicalExpression:
+            markConstantExpression(ast.left);
+            markConstantExpression(ast.right);
+            ast.constant = ast.left.constant && ast.right.constant;
+            break;
+        case AST.ConditionExpression:
+            markConstantExpression(ast.test);
+            markConstantExpression(ast.consequent);
+            markConstantExpression(ast.alternate);
+            ast.constant = ast.test.constant && ast.consequent.constant && ast.alternate.constant;
+            break;
+    }
+}
 
 /********************** Parser **********************/
 

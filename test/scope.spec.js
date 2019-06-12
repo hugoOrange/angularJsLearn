@@ -1,4 +1,5 @@
 /* jshint globalstrict: true  */
+/* global parse: false, register: false */
 "use strict";
 
 describe("Scope", function () {
