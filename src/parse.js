@@ -1033,7 +1033,7 @@ function getInputs(ast) {
     // Below expressions will pass:
     // '[a,b,c]' '{a:2,d:c}' 
     // Below expressions won't pass:
-    // 'a' 'a;b' 'a=b' 'a=b+c' 'm=[a,b,c]'
+    // 'a' 'a;b' 'a=b' 'a=b+c' 'm=[a,b,c]' 'aFunction()' 'a.bFunction()'
     if (ast.length !== 1) {
         return;
     }
@@ -1110,8 +1110,14 @@ function markConstantAndWatchExpressions(ast) {
             ast.toWatch = [ast];
             break;
         case AST.CallExpression:
+            // We treat filter as a `constant` function:
+            // a filter is always expected to return the same result given the same inputs.
+            // But somestimes this assumption does not hold: using a filter which
+            // use the Date().So we use $stateful to avoid that.
+            // $stateful -- treat it like non constant expression.
+            var stateless = ast.filter && !filter(ast.callee.name).$stateful;
+            allConstants = stateless ? true : false;
             argsToWatch = [];
-            allConstants = ast.filter ? true : false;
             _.forEach(ast.arguments, function (arg) {
                 markConstantAndWatchExpressions(arg);
                 allConstants = allConstants && arg.constant;
@@ -1120,7 +1126,7 @@ function markConstantAndWatchExpressions(ast) {
                 }
             });
             ast.constant = allConstants;
-            ast.toWatch = ast.filter ? argsToWatch : [ast];
+            ast.toWatch = stateless ? argsToWatch : [ast];
             break;
         case AST.AssignmentExpression:
             markConstantAndWatchExpressions(ast.left);

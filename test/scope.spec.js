@@ -1,5 +1,5 @@
 /* jshint globalstrict: true  */
-/* global parse: false, register: false */
+/* global Scope: false, parse: false, register: false */
 "use strict";
 
 describe("Scope", function () {
@@ -943,6 +943,34 @@ describe("Scope", function () {
             scope.$digest();
             expect(values.length).toBe(2);
             expect(values[1]).toEqual([1, 2, 4]);
+        });
+
+        // Stateful filters
+        it("allows $stateful filter value to change over time", function (done) {
+            register('withTime', function () {
+                return _.extend(function (v) {
+                    return new Date().toISOString() + ': ' + v;
+                }, {
+                    $stateful: true
+                });
+            });
+            register('withTime2', function () {
+                return _.extend(function (v) {
+                    return new Date().toISOString() + ': ' + v;
+                });
+            });
+            
+            var listenerSpy = jasmine.createSpy();
+            scope.$watch('42 | withTime', listenerSpy);
+            scope.$digest();
+            var firstValue = listenerSpy.calls.mostRecent().args[0];
+
+            setTimeout(function () {
+                scope.$digest();
+                var secondValue = listenerSpy.calls.mostRecent().args[0];
+                expect(secondValue).not.toEqual(firstValue);
+                done();
+            }, 100);
         });
     });
 
