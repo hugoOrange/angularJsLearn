@@ -53,6 +53,7 @@ function parse(expr) {
         case 'string':
             var lexer = new Lexer();
             var parser = new Parser(lexer);
+            // using oneTime binding can reduce the watchers
             var oneTime = false;
             // one-time-watches: '::[1, 2, value]'
             if (expr.charAt(0) === ':' && expr.charAt(1) === ':') {
@@ -750,9 +751,11 @@ ASTCompiler.prototype.compile = function (text) {
         filters: {},
         inputs: []
     };
-    this.stage = 'inputs';
+
     // break up the expression(object || array) into serveral watches
     // This solves that the watch function for object or array always return new value
+    // And minimize the evaluation of compound expressions
+    this.stage = 'inputs';
     _.forEach(getInputs(ast.body), function (input, idx) {
         var inputKey = 'fn' + idx;
         this.state[inputKey] = {body: [], vars: []};
@@ -760,11 +763,12 @@ ASTCompiler.prototype.compile = function (text) {
         this.state[inputKey].body.push('return ' + this.recurse(input) + ';');
         this.state.inputs.push(inputKey);
     }, this);
-    this.stage = 'assign';
-    // fn.assign -- provide a method that modify the value in the scope
+
+    // fn.assign -- provide the method that modifies the value in the scope
     // different from main function:
     // main function    - returns the value like get() [end of 'return b;']
     // assign function  - assign the value like set()  [end of 'val = b;']
+    this.stage = 'assign';
     var assignable = assignableAST(ast);
     if (assignable) {
         this.state.computing = 'assign';
@@ -777,6 +781,8 @@ ASTCompiler.prototype.compile = function (text) {
             this.state.assign.body.join('') +
             '};';
     }
+
+    // main function, as mentioned above, it is a get function
     this.stage = 'main';
     this.state.computing = 'fn';
     this.recurse(ast);
@@ -791,6 +797,7 @@ ASTCompiler.prototype.compile = function (text) {
         this.watchFns() +
         extra +
         ' return fn;';
+        
     /* jshint -W054 */
     var fn = new Function(
         'ensureSafeMemberName',
@@ -805,6 +812,7 @@ ASTCompiler.prototype.compile = function (text) {
             ifDefined,
             filter);
     /* jshint +W054 */
+    
     /**
      * literal: whether the expression is a literal value
      * constant: whether the expression can be a literal value by calculation
