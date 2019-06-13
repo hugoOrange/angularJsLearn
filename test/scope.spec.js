@@ -945,7 +945,7 @@ describe("Scope", function () {
             expect(values[1]).toEqual([1, 2, 4]);
         });
 
-        // Stateful filters
+        // Stateful Filters
         it("allows $stateful filter value to change over time", function (done) {
             register('withTime', function () {
                 return _.extend(function (v) {
@@ -971,6 +971,24 @@ describe("Scope", function () {
                 expect(secondValue).not.toEqual(firstValue);
                 done();
             }, 100);
+        });
+
+        // External Assignment
+        it("allows calling assign on identifier expressions", function () {
+            var fn = parse('anAttribute');
+            expect(fn.assign).toBeDefined();
+
+            var scope = {};
+            fn.assign(scope, 42);
+            expect(scope.anAttribute).toBe(42);
+        });
+        it("allows calling assign on member expressions", function () {
+            var fn = parse('anObject.anAttribute');
+            expect(fn.assign).toBeDefined();
+
+            var scope = {};
+            fn.assign(scope, 42);
+            expect(scope.anObject).toEqual({anAttribute: 42});
         });
     });
 
