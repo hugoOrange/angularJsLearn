@@ -745,6 +745,8 @@ ASTCompiler.prototype.compile = function (text) {
         inputs: []
     };
     this.stage = 'inputs';
+    // break up the expression(object || array) into serveral watches
+    // This solves that the watch function for object or array always return new value
     _.forEach(getInputs(ast.body), function (input, idx) {
         var inputKey = 'fn' + idx;
         this.state[inputKey] = {body: [], vars: []};
@@ -1028,6 +1030,10 @@ ASTCompiler.prototype.filter = function (name) {
 };
 
 function getInputs(ast) {
+    // Below expressions will pass:
+    // '[a,b,c]' '{a:2,d:c}' 
+    // Below expressions won't pass:
+    // 'a' 'a;b' 'a=b' 'a=b+c' 'm=[a,b,c]'
     if (ast.length !== 1) {
         return;
     }
