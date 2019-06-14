@@ -1,7 +1,34 @@
 /* jshint globalstrict: true  */
-/* global setupModuleLoader: false, createInjector: false */
+/* global angular: false, setupModuleLoader: false, createInjector: false */
 "use strict";
 
 function createInjector(modulesToLoad) {
-    return {};
+    var cache = {};
+
+    var $provide = {
+        constant: function (key, value) {
+            if (key === 'hasOwnProperty') {
+                throw 'hasOwnProperty is not a valid injector name';
+            }
+            cache[key] = value;
+        }
+    };
+
+    _.forEach(modulesToLoad, function (moduleName) {
+        var module = angular.module(moduleName);
+        _.forEach(module._invokeQueue, function (invokeArgs) {
+            var method = invokeArgs[0];
+            var args = invokeArgs[1];
+            $provide[method].apply($provide, args);
+        });
+    });
+
+    return {
+        has: function (key) {
+            return cache.hasOwnProperty(key);
+        },
+        get: function (key) {
+            return cache[key];
+        }
+    };
 }

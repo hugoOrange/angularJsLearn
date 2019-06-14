@@ -1,6 +1,11 @@
 /* jshint globalstrict: true  */
 "use strict";
 
+/**
+ * difference between `module` and `injector`:
+ * `module`   -- stores the factory method making up value
+ * `injector` -- stores the extract value
+ */
 function setupModuleLoader(window) {
     var ensure = function (obj, name, factory) {
         return obj[name] || (obj[name] = factory());
@@ -9,9 +14,17 @@ function setupModuleLoader(window) {
     var angular = ensure(window, 'angular', Object);
 
     var createModule = function (name, requires, modules) {
+        if (name === 'hasOwnProperty') {
+            throw "hasOwnProperty is not a valid module name";
+        }
+        var invokeQueue = [];
         var moduleInstance = {
             name: name,
-            requires: requires
+            requires: requires,
+            constant: function (key, value) {
+                invokeQueue.push(['constant', [key, value]]);
+            },
+            _invokeQueue: invokeQueue
         };
         modules[name] = moduleInstance;
         return moduleInstance;
@@ -28,9 +41,6 @@ function setupModuleLoader(window) {
     var module = ensure(window.angular, 'module', function () {
         var modules = {};
         return function (name, requires) {
-            if (name === 'hasOwnProperty') {
-                throw "hasOwnProperty is not a valid module name";
-            }
             if (requires) {
                 return createModule(name, requires, modules);
             } else {
