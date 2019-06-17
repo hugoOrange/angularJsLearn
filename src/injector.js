@@ -28,6 +28,14 @@ function createInjector(modulesToLoad) {
         return fn.apply(self, args);
     }
 
+    function annotate(fn) {
+        if (_.isArray(fn)) {
+            return fn.slice(0, fn.length - 1);
+        } else {
+            return fn.$inject;  
+        }
+    }
+
     _.forEach(modulesToLoad, function loadModule(moduleName) {
         if (!loadedModules.hasOwnProperty(moduleName)) {
             loadedModules[moduleName] = true;
@@ -49,6 +57,8 @@ function createInjector(modulesToLoad) {
             return cache[key];
         },
 
-        invoke: invoke
+        invoke: invoke,
+
+        annotate: annotate
     };
 }
