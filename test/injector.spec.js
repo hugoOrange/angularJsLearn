@@ -311,6 +311,8 @@ describe("injector", function () {
             expect(injector.has('a')).toBe(true);
             expect(injector.get('a')).toBe(42);
         });
+
+        // Injecting dependencies to the `$get` Method
         it("injects the $get method of a provider", function () {
             var module = angular.module('myModule', []);
             module.constant('a', 1);
@@ -319,6 +321,21 @@ describe("injector", function () {
                     return a + 2;
                 }
             });
+
+            var injector = createInjector(['myModule']);
+
+            expect(injector.get('b')).toBe(3);
+        });
+
+        // Lazy Instantiation of Dependencies
+        it("injects the $get method of a provider lazily", function () {
+            var module = angular.module('myModule', []);
+            module.provider('b', {
+                $get: function (a) {
+                    return a + 2;
+                }
+            });
+            module.provider('a', {$get: _.constant(1)});
 
             var injector = createInjector(['myModule']);
 
