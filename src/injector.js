@@ -11,12 +11,16 @@ function createInjector(modulesToLoad, strictDi) {
     var loadedModules = {};
     strictDi = (strictDi === true);
 
+    // set the function in the injection
     var $provide = {
         constant: function (key, value) {
             if (key === 'hasOwnProperty') {
                 throw 'hasOwnProperty is not a valid injector name';
             }
             cache[key] = value;
+        },
+        provider: function (key, provider) {
+            cache[key] = provider.$get();
         }
     };
 
