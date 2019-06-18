@@ -2,14 +2,17 @@
 /* global angular: false, setupModuleLoader: false, createInjector: false */
 "use strict";
 
-var FN_ARGS = /^function\s*[^\(]*\(\s*([^\)]*)\)/m;
-var FN_ARG  = /^\s*(_?)(\S+)\1\s*$/m;
-var STRIP_COMMENTS = /(\/\/.*$)|(\/\*.*\*\/)/mg;
-
 function createInjector(modulesToLoad, strictDi) {
+
+    var FN_ARGS = /^function\s*[^\(]*\(\s*([^\)]*)\)/m;
+    var FN_ARG  = /^\s*(_?)(\S+)\1\s*$/m;
+    var STRIP_COMMENTS = /(\/\/.*$)|(\/\*.*\*\/)/mg;
+    var INSTANTIATING = {};
+
     var providerCache = {};
     var instanceCache = {};
     var loadedModules = {};
+    var path = [];
     strictDi = (strictDi === true);
 
     // set the function in the injection
@@ -25,12 +28,27 @@ function createInjector(modulesToLoad, strictDi) {
         }
     };
 
+    // set the function in the injection
     function getService(name) {
         if (instanceCache.hasOwnProperty(name)) {
+            if (instanceCache[name] === INSTANTIATING) {
+                throw new Error('Circular dependency found: ' +
+                    name + ' <- ' + path.join(' <- '));
+            }
             return instanceCache[name];
         } else if (providerCache.hasOwnProperty(name + 'Provider')) {
-            var provider = providerCache[name + 'Provider'];
-            return invoke(provider.$get, provider);
+            path.unshift(name);
+            instanceCache[name] = INSTANTIATING;
+            try {
+                var provider = providerCache[name + 'Provider'];
+                var instance = instanceCache[name] = invoke(provider.$get, provider);
+                return instance;
+            } finally {
+                path.shift(name);
+                if (instanceCache[name] === INSTANTIATING) {
+                    delete instanceCache[name];
+                }
+            }
         }
     }
 
