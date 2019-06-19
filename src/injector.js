@@ -75,7 +75,7 @@ function createInjector(modulesToLoad, strictDi) {
 
     function createInternalInjector(cache, factoryFn) {
         
-        // get the function injected
+        // get the function injected (lazily initializing)
         function getService(name) {
             if (cache.hasOwnProperty(name)) {
                 if (cache[name] === INSTANTIATING) {
@@ -102,6 +102,7 @@ function createInjector(modulesToLoad, strictDi) {
         function invoke(fn, self, locals) {
             var args = _.map(annotate(fn), function (token) {
                 if (_.isString(token)) {
+                    // sington
                     return locals && locals.hasOwnProperty(token) ?
                         locals[token] :
                         getService(token);

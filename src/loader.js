@@ -19,6 +19,7 @@ function setupModuleLoader(window) {
         }
         var invokeQueue = [];
 
+        // ensure that constant inject first
         var invokeLater = function (method, arrayMethod) {
             return function () {
                 invokeQueue[arrayMethod || 'push']([method, arguments]);
