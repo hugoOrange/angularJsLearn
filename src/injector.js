@@ -38,7 +38,7 @@ function createInjector(modulesToLoad, strictDi) {
     strictDi = (strictDi === true);
 
     // set the function in the injection
-    var $provide = {
+    providerCache.$provide = {
         constant: function (key, value) {
             if (key === 'hasOwnProperty') {
                 throw 'hasOwnProperty is not a valid injector name';
@@ -149,7 +149,7 @@ function createInjector(modulesToLoad, strictDi) {
             _.forEach(module._invokeQueue, function (invokeArgs) {
                 var method = invokeArgs[0];
                 var args = invokeArgs[1];
-                $provide[method].apply($provide, args);
+                providerCache.$provide[method].apply(providerCache.$provide, args);
             });
         }
     });

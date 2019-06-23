@@ -503,7 +503,7 @@ describe("injector", function () {
     
     describe("high-level dependency injection", function () {
        
-        // $injector
+        // $injector -- get dependencies that have been configured
         it("allows injecting the instance injector to $get", function () {
             var module = angular.module('myModule', []);
 
@@ -535,6 +535,33 @@ describe("injector", function () {
             var injector = createInjector(['myModule']);
 
             expect(injector.get('b')).toBe(42);
+        });
+
+        // $provide -- register dependency in the dependency
+        it("allows injecting the $provide service to providers", function () {
+            var module = angular.module('myModule', []);
+
+            module.provider('a', function AProvider($provide) {
+                $provide.constant('b', 2);
+                this.$get = function(b) { return 1 + b; };
+            });
+
+            var injector = createInjector(['myModule']);
+
+            expect(injector.get('a')).toBe(3);
+        });
+        it("does not allow injecting the $provide servide to $get", function () {
+            var module = angular.module('myModule', []);
+
+            module.provider('a', function AProvider() {
+                this.$get = function($provide) { };
+            });
+
+            var injector = createInjector(['myModule']);
+
+            expect(function() {
+                injector.get("a");
+            }).toThrow();
         });
 
     });
