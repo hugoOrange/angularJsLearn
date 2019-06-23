@@ -35,9 +35,18 @@ function setupModuleLoader(window) {
             requires: requires,
             constant: invokeLater('$provide', 'constant', 'unshift'),
             provider: invokeLater('$provide', 'provider'),
+            // config -- run during module loading, is often used to config the 
+            // provide function instead of writing another provider to do it
             config: invokeLater('$injector', 'invoke', 'push', configBlocks),
+            // run -- is not for injecting, but is used to run some arbitary code
+            // you want to hook on to the Angular startup process
+            run: function (fn) {
+                moduleInstance._runBlocks.push(fn);
+                return moduleInstance;
+            },
             _invokeQueue: invokeQueue,
-            _configBlocks: configBlocks
+            _configBlocks: configBlocks,
+            _runBlocks: []
         };
 
         if (configFn) {
