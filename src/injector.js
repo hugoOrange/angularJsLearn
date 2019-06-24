@@ -21,6 +21,13 @@ function createInjector(modulesToLoad, strictDi) {
      *    injector's external API. The instance cache is populated as dependencies are
      *    instantiated, which happens in the fallback function of instanceInjector.
      */
+    /**
+     * Other phases:
+     * 1. module-constant
+     * 2. module-provider
+     * 3. module-config
+     * 4. all-run
+     */
     var providerCache = {};
     var providerInjector = providerCache.$injector =
         createInternalInjector(providerCache, function () {
