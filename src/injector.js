@@ -1,5 +1,5 @@
 /* jshint globalstrict: true  */
-/* global angular: false, setupModuleLoader: false, createInjector: false */
+/* global angular: false, HashMap: false */
 "use strict";
 
 function createInjector(modulesToLoad, strictDi) {
@@ -40,7 +40,7 @@ function createInjector(modulesToLoad, strictDi) {
         return instanceInjector.invoke(provider.$get, provider);
     });
 
-    var loadedModules = {};
+    var loadedModules = new HashMap();
     var path = [];
     strictDi = (strictDi === true);
 
@@ -60,7 +60,7 @@ function createInjector(modulesToLoad, strictDi) {
             providerCache[key + "Provider"] = provider;
         }
     };
-    
+
     // return the function annotation(parameters)
     function annotate(fn) {
         if (_.isArray(fn)) {
@@ -159,17 +159,17 @@ function createInjector(modulesToLoad, strictDi) {
 
     var runBlocks = [];
     _.forEach(modulesToLoad, function loadModule(module) {
-        if (_.isString(module)) {
-            if (!loadedModules.hasOwnProperty(module)) {
-                loadedModules[module] = true;
+        if (!loadedModules.get(module)) {
+            loadedModules.put(module, true);
+            if (_.isString(module)) {
                 module = angular.module(module);
                 _.forEach(module.requires, loadModule);
                 runInvokeQueue(module._invokeQueue);
                 runInvokeQueue(module._configBlocks);
                 runBlocks = runBlocks.concat(module._runBlocks);
+            } else if (_.isFunction(module) || _.isArray(module)) {
+                runBlocks.push(providerInjector.invoke(module));
             }
-        } else if (_.isFunction(module) || _.isArray(module)) {
-            runBlocks.push(providerInjector.invoke(module));
         }
     });
     _.forEach(_.compact(runBlocks), function (runBlock) {
