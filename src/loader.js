@@ -35,6 +35,7 @@ function setupModuleLoader(window) {
             requires: requires,
             constant: invokeLater('$provide', 'constant', 'unshift'),
             provider: invokeLater('$provide', 'provider'),
+            factory: invokeLater('$provide', 'factory'),
             // config -- run during module loading, is often used to config the 
             // provide function instead of writing another provider to do it
             config: invokeLater('$injector', 'invoke', 'push', configBlocks),
