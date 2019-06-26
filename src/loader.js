@@ -37,6 +37,7 @@ function setupModuleLoader(window) {
             provider: invokeLater('$provide', 'provider'),
             factory: invokeLater('$provide', 'factory'),
             value: invokeLater('$provide', 'value'),
+            service: invokeLater('$provide', 'service'),
             // config -- run during module loading, is often used to config the 
             // provide function instead of writing another provider to do it
             config: invokeLater('$injector', 'invoke', 'push', configBlocks),
