@@ -1,11 +1,19 @@
 /* jshint globalstrict: true  */
-/* global parse: false, filter: false */
+/* global publishExternalAPI: false, createInjector: false */
 "use strict";
 
 describe("filter filter", function () {
+
+    var parse;
+
+    beforeEach(function () {
+        publishExternalAPI();
+        parse = createInjector(['ng']).get('$parse');
+    });
     
     it("is available", function () {
-        expect(filter('filter')).toBeDefined();
+        var injector = createInjector(['ng']);
+        expect(injector.has('filterFilter')).toBe(true);
     });
 
     // Use Function For Filtering

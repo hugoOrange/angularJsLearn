@@ -84,5 +84,3 @@ function deepCompare(actual, expected, comparator, matchAnyProperty, inWildcard)
         return comparator(actual, expected);
     }
 }
-
-register('filter', filterFilter);
