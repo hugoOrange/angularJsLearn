@@ -9,15 +9,21 @@ function $QProvider() {
         }
         Promise.prototype.then = function (onFulFilled) {
             this.$$state.pending = onFulFilled;
+            if (this.$$state.status > 0) {
+                scheduleProcessQueue(this.$$state);
+            }
         };
 
         function Deferred() {
             this.promise = new Promise();
         }
         Deferred.prototype.resolve = function (value) {
+            if (this.promise.$$state.status) {
+                return;
+            }
             this.promise.$$state.value = value;
+            this.promise.$$state.status = 1;
             scheduleProcessQueue(this.promise.$$state);
-            // this.promise.$$state.pending(value);
         };
 
         function scheduleProcessQueue(state) {

@@ -73,5 +73,48 @@ describe("$q", function () {
         
         expect(promiseSpy).toHaveBeenCalledWith(42);
     });
-    
+
+    // Preventing Multiple Resolutions
+    it("may only be resolved once", function () {
+        var d = $q.defer();
+
+        var promiseSpy = jasmine.createSpy();
+        d.promise.then(promiseSpy);
+
+        d.resolve(42);
+        d.resolve(43);
+
+        $rootScope.$apply();
+
+        expect(promiseSpy.calls.count()).toEqual(1);
+        expect(promiseSpy).toHaveBeenCalledWith(42);
+    });
+    it("may only ever be resolved once", function () {
+        var d = $q.defer();
+
+        var promiseSpy = jasmine.createSpy();
+        d.promise.then(promiseSpy);
+
+        d.resolve(42);
+        $rootScope.$apply();
+        expect(promiseSpy).toHaveBeenCalledWith(42);
+
+        d.resolve(43);
+        $rootScope.$apply();
+        expect(promiseSpy.calls.count()).toEqual(1);
+    });
+
+    // Ensuring that Callbacks Get Invoked
+    it("resolves a listener added after resolution", function () {
+        var d = $q.defer();
+        d.resolve(42);
+        $rootScope.$apply();
+
+        var promiseSpy = jasmine.createSpy();
+        d.promise.then(promiseSpy);
+        $rootScope.$apply();
+
+        expect(promiseSpy).toHaveBeenCalledWith(42);
+    });
+
 });
