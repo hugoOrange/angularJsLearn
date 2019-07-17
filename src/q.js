@@ -7,12 +7,16 @@ function $QProvider() {
         function Promise() {
             this.$$state = {};
         }
+        // instead of making a array to store the promise chain,
+        // we use an independent promise to implement the chain.
         Promise.prototype.then = function (onFulFilled, onRejected) {
+            var result = new Deferred();
             this.$$state.pending = this.$$state.pending || [];
-            this.$$state.pending.push([null, onFulFilled, onRejected]);
+            this.$$state.pending.push([result, onFulFilled, onRejected]);
             if (this.$$state.status > 0) {
                 scheduleProcessQueue(this.$$state);
             }
+            return result.promise;
         };
         Promise.prototype.catch = function (onRejected) {
             return this.then(null, onRejected);
@@ -55,9 +59,16 @@ function $QProvider() {
             var pending = state.pending;
             delete state.pending;
             _.forEach(pending, function (handlers) {
+                var deferred = handlers[0];
                 var fn = handlers[state.status];
                 if (_.isFunction(fn)) {
-                    fn(state.value);
+                    // run current promise and pass the return value to
+                    // the next chain
+                    deferred.resolve(fn(state.value));
+                } else if (state.status === 1) {
+                    deferred.resolve(state.value);
+                } else {
+                    deferred.reject(state.value);
                 }
             });
         }
