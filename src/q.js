@@ -8,7 +8,8 @@ function $QProvider() {
             this.$$state = {};
         }
         Promise.prototype.then = function (onFulFilled) {
-            this.$$state.pending = onFulFilled;
+            this.$$state.pending = this.$$state.pending || [];
+            this.$$state.pending.push(onFulFilled);
             if (this.$$state.status > 0) {
                 scheduleProcessQueue(this.$$state);
             }
@@ -33,7 +34,11 @@ function $QProvider() {
         }
 
         function processQueue(state) {
-            state.pending(state.value);
+            var pending = state.pending;
+            delete state.pending;
+            _.forEach(pending, function (onFulfilled) {
+                onFulfilled(state.value);
+            });
         }
 
         function defer() {
