@@ -153,4 +153,87 @@ describe("$q", function () {
         expect(secondSpy.calls.count()).toBe(1);
     });
 
+    // Rejecting Deferreds And Catching Rejections
+    /* Though we have two ways to handle error:
+     * 1. send error to resolve functin
+     * 2. pass an error handle function to promise   */
+    it("can reject a deferred", function () {
+        var d = $q.defer();
+
+        var fulfillSpy = jasmine.createSpy();
+        var rejectSpy = jasmine.createSpy();
+        d.promise.then(fulfillSpy, rejectSpy);
+        
+        d.reject('fail');
+        $rootScope.$apply();
+
+        expect(fulfillSpy).not.toHaveBeenCalled();
+        expect(rejectSpy).toHaveBeenCalledWith('fail');
+    });
+    it("can reject just once", function () {
+        var d = $q.defer();
+
+        var rejectSpy = jasmine.createSpy();
+        d.promise.then(null, rejectSpy);
+
+        d.reject('fail');
+        $rootScope.$apply();
+        expect(rejectSpy.calls.count()).toBe(1);
+        
+        d.reject('fail again');
+        $rootScope.$apply();
+        expect(rejectSpy.calls.count()).toBe(1);
+    });
+    it("cannot fulfill a promise once rejected", function () {
+        var d = $q.defer();
+
+        var fulfillSpy = jasmine.createSpy();
+        var rejectSpy = jasmine.createSpy();
+        d.promise.then(fulfillSpy, rejectSpy);
+
+        d.reject('fail');
+        $rootScope.$apply();
+
+        d.resolve('success');
+        $rootScope.$apply();
+
+        expect(fulfillSpy).not.toHaveBeenCalled();
+    });
+    it("does not require a failure handler each time", function () {
+        var d = $q.defer();
+
+        var fulfillSpy = jasmine.createSpy();
+        var rejectSpy = jasmine.createSpy();
+        d.promise.then(fulfillSpy);
+        d.promise.then(null, rejectSpy);
+
+        d.reject('fail');
+        $rootScope.$apply();
+
+        expect(rejectSpy).toHaveBeenCalledWith('fail');
+    });
+    it("does not require a success handler each time", function () {
+        var d = $q.defer();
+
+        var fulfillSpy = jasmine.createSpy();
+        var rejectSpy = jasmine.createSpy();
+        d.promise.then(fulfillSpy);
+        d.promise.then(null, rejectSpy);
+
+        d.resolve('ok');
+        $rootScope.$apply();
+
+        expect(fulfillSpy).toHaveBeenCalledWith('ok');
+    });
+    it("can register rejection handler with catch", function () {
+        var d = $q.defer();
+
+        var rejectSpy = jasmine.createSpy();
+        d.promise.catch(rejectSpy);
+        d.reject('fail');
+        $rootScope.$apply();
+
+        expect(rejectSpy).toHaveBeenCalled();
+    });
+
 });
