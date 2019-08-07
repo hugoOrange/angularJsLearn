@@ -9,10 +9,10 @@ function $QProvider() {
         }
         // instead of making a array to store the promise chain,
         // we use an independent promise to implement the chain.
-        Promise.prototype.then = function (onFulFilled, onRejected) {
+        Promise.prototype.then = function (onFulFilled, onRejected, onProgress) {
             var result = new Deferred();
             this.$$state.pending = this.$$state.pending || [];
-            this.$$state.pending.push([result, onFulFilled, onRejected]);
+            this.$$state.pending.push([result, onFulFilled, onRejected, onProgress]);
             if (this.$$state.status > 0) {
                 scheduleProcessQueue(this.$$state);
             }
@@ -21,12 +21,12 @@ function $QProvider() {
         Promise.prototype.catch = function (onRejected) {
             return this.then(null, onRejected);
         };
-        Promise.prototype.finally = function (callback) {
+        Promise.prototype.finally = function (callback, progressBack) {
             return this.then(function (value) {
                 return handleFinallyCallback(callback, value, true);
             }, function (rejection) {
                 return handleFinallyCallback(callback, rejection, false);
-            });
+            }, progressBack);
         };
         function makePromise(value, resolved) {
             var d = new Deferred();
@@ -52,6 +52,26 @@ function $QProvider() {
         function Deferred() {
             this.promise = new Promise();
         }
+        Deferred.prototype.notify = function (progress) {
+            var pending = this.promise.$$state.pending;
+            if (pending && pending.length && !this.promise.$$state.status) {
+                $rootScope.$evalAsync(function () {
+                    _.forEach(pending, function (handlers) {
+                        var deferred = handlers[0];
+                        var progressBack = handlers[3];
+                        // notification stop chain when error occurs
+                        try {
+                            deferred.notify(_.isFunction(progressBack) ?
+                                                progressBack(progress) :
+                                                progress
+                            );
+                        } catch (e) {
+                            console.log(e);
+                        }
+                    });
+                });
+            }
+        };
         Deferred.prototype.resolve = function (value) {
             if (this.promise.$$state.status) {
                 return;
@@ -59,7 +79,8 @@ function $QProvider() {
             if (value && _.isFunction(value.then)) { // promise nest
                 value.then(
                     _.bind(this.resolve, this),
-                    _.bind(this.reject, this)
+                    _.bind(this.reject, this),
+                    _.bind(this.notify, this)
                 );
             } else {
                 this.promise.$$state.value = value;
