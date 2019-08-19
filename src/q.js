@@ -28,6 +28,7 @@ function $QProvider() {
                 return handleFinallyCallback(callback, rejection, false);
             }, progressBack);
         };
+
         function makePromise(value, resolved) {
             var d = new Deferred();
             if (resolved) {
@@ -37,6 +38,7 @@ function $QProvider() {
             }
             return d.promise;
         }
+
         function handleFinallyCallback(callback, value, resolved) {
             var callbackValue = callback();
             if (callbackValue && callbackValue.then) {
@@ -54,7 +56,8 @@ function $QProvider() {
         }
         Deferred.prototype.notify = function (progress) {
             var pending = this.promise.$$state.pending;
-            if (pending && pending.length && !this.promise.$$state.status) {
+            if (pending && pending.length &&
+                !this.promise.$$state.status) {
                 $rootScope.$evalAsync(function () {
                     _.forEach(pending, function (handlers) {
                         var deferred = handlers[0];
@@ -62,8 +65,8 @@ function $QProvider() {
                         // notification stop chain when error occurs
                         try {
                             deferred.notify(_.isFunction(progressBack) ?
-                                                progressBack(progress) :
-                                                progress
+                                progressBack(progress) :
+                                progress
                             );
                         } catch (e) {
                             console.log(e);
@@ -141,11 +144,34 @@ function $QProvider() {
             return d.promise.then(callback, errback, progressback);
         }
 
+        function all(promises) {
+            var results = _.isArray(promises) ? [] : {};
+            var counter = 0;
+            var d = defer();
+            _.forEach(promises, function (promise, index) {
+                counter++;
+                when(promise).then(function (value) {
+                    results[index] = value;
+                    counter--;
+                    if (!counter) {
+                        d.resolve(results);
+                    }
+                }, function (rejection) {
+                    d.reject(rejection);
+                });
+            });
+            if (!counter) {
+                d.resolve(results);
+            }
+            return d.promise;
+        }
+
         return {
             defer: defer,
             reject: reject,
             when: when,
-            resolve: when
+            resolve: when,
+            all: all
         };
     }];
 }

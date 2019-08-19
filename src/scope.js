@@ -15,7 +15,7 @@
 
 function $RootScopeProvider() {
 
-    var TTL = 10; // "TTL" -- "Time To Live"
+    var TTL = 100; // "TTL" -- "Time To Live"
 
     this.digestTtl = function (value) {
         if (_.isNumber(value)) {
