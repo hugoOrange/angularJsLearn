@@ -106,4 +106,13 @@ describe("$http", function () {
         expect(response.config.url).toBe('http://teropa.info');
     });
 
+    // Default Request Configuartion
+    it("uses GET method by default", function () {
+        $http({
+            url: 'http://teropa.info'
+        });
+        expect(requests.length).toBe(1);
+        expect(requests[0].method).toBe('GET');
+    });
+
 });

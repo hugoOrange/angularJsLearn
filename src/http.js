@@ -5,8 +5,12 @@ function $HttpProvider() {
     
     this.$get = ['$httpBackend', '$q', '$rootScope', function ($httpBackend, $q, $rootScope) {
         
-        return function $http(config) {
+        return function $http(requestConfig) {
             var deferred = $q.defer();
+
+            var config = _.extend({
+                method: 'GET'
+            }, requestConfig);
 
             function isSuccess(status) {
                 return status >= 200 && status < 300;
