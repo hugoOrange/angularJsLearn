@@ -172,7 +172,7 @@ function qFactory(callLater) {
         var d = defer();
         resolver(
             _.bind(d.resolve, d),
-            _.bind(d.reject, d),
+            _.bind(d.reject, d)
         );
         return d.promise;
     };
@@ -184,7 +184,7 @@ function qFactory(callLater) {
         resolve: when,
         all: all
     });
-};
+}
 
 
 function $QProvider() {
