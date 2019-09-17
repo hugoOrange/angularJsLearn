@@ -30,6 +30,11 @@ function $HttpProvider() {
             }, requestConfig);
             config.headers = mergeHeaders(requestConfig);
 
+            if (_.isUndefined(config.withCredentials) &&
+                !_.isUndefined(defaults.withCredentials)) {
+                config.withCredentials = defaults.withCredentials;
+            }
+
             if (_.isUndefined(config.data)) {
                 _.forEach(config.headers, function (v, k) {
                     if (k.toLowerCase() === 'content-type') {
@@ -117,7 +122,8 @@ function $HttpProvider() {
                 config.url,
                 config.data,
                 done,
-                config.headers
+                config.headers,
+                config.withCredentials
             );
 
             return deferred.promise;
