@@ -76,17 +76,40 @@ function $HttpProvider() {
                 return status >= 200 && status < 300;
             }
             
-            function done(status, response, statusText) {
+            function done(status, response, headersString, statusText) {
                 status = Math.max(status, 0);
                 deferred[isSuccess(status) ? 'resolve' : 'reject']({
                     status: status,
                     data: response,
                     statusText: statusText,
+                    headers: headersGetter(headersString),
                     config: config
                 });
                 if (!$rootScope.$$phase) {
                     $rootScope.$apply();
                 }
+            }
+            function headersGetter(headers) {
+                var headersObj;
+                return function (name) {
+                    headersObj = headersObj || parseHeaders(headers);
+                    if (name) {
+                        return headersObj[name.toLowerCase()];
+                    } else {
+                        return headersObj;
+                    }
+                };
+            }
+            function parseHeaders(headers) {
+                var lines = headers.split('\n');
+                return _.transform(lines, function (result, line) {
+                    var separatorAr = line.indexOf(':');
+                    var name = _.trim(line.substr(0, separatorAr)).toLowerCase();
+                    var value = _.trim(line.substr(separatorAr + 1));
+                    if (name) {
+                        result[name] = value;
+                    }
+                }, {});
             }
 
             $httpBackend(
