@@ -26,7 +26,8 @@ function $HttpProvider() {
                 return data;
             }
         }],
-        transformResponse: [defaultHttpResponseTransform]
+        transformResponse: [defaultHttpResponseTransform],
+        paramSerializer: '$httpParamSerializer'
     };
     function defaultHttpResponseTransform(data, headers) {
         if (_.isString(data)) {
@@ -55,8 +56,10 @@ function $HttpProvider() {
             return data.match(/\]$/);
         }
     }
+
     
-    this.$get = ['$httpBackend', '$q', '$rootScope', function ($httpBackend, $q, $rootScope) {
+    this.$get = ['$httpBackend', '$q', '$rootScope', '$injector',
+        function ($httpBackend, $q, $rootScope, $injector) {
         
         function transformData(data, headers, status, transform) {
             if (_.isFunction(transform)) {
@@ -77,11 +80,12 @@ function $HttpProvider() {
                 {},
                 defaults.headers.common,
                 defaults.headers[(config.method || 'get').toLowerCase()]
-                );
-                _.forEach(defHeaders, function (value, key) {
-                    var headerExists = _.any(reqHeaders, function (v, k) {
-                        return k.toLowerCase() === key.toLowerCase();
-                    });
+            );
+
+            _.forEach(defHeaders, function (value, key) {
+                var headerExists = _.any(reqHeaders, function (v, k) {
+                    return k.toLowerCase() === key.toLowerCase();
+                });
                 if (!headerExists) {
                     reqHeaders[key] = value;
                 }
@@ -152,9 +156,19 @@ function $HttpProvider() {
                 }
             }
 
+            var url = buildUrl(config.url, 
+                               config.paramSerializer(config.params));
+
+            function buildUrl(url, serializedParams) {
+                if (serializedParams.length) {
+                    url += (url.indexOf('?') === -1) ? '?' : '&';
+                    url += serializedParams;
+                }
+                return url;
+            }
             $httpBackend(
                 config.method,
-                config.url,
+                url,
                 reqData,
                 done,
                 config.headers,
@@ -167,9 +181,13 @@ function $HttpProvider() {
             var config = _.extend({
                 method: 'GET',
                 transformRequest: defaults.transformRequest,
-                transformResponse: defaults.transformResponse
+                transformResponse: defaults.transformResponse,
+                paramSerializer: defaults.paramSerializer
             }, requestConfig);
             config.headers = mergeHeaders(requestConfig);
+            if (_.isString(config.paramSerializer)) {
+                config.paramSerializer = $injector.get(config.paramSerializer);
+            }
 
             if (_.isUndefined(config.withCredentials) &&
                 !_.isUndefined(defaults.withCredentials)) {
@@ -214,4 +232,62 @@ function $HttpProvider() {
         return $http;
     }];
 
+}
+
+function $HttpParamSerializerProvider() {
+    this.$get = function () {
+        return function serializeParams(params) {
+            var parts = [];
+            _.forEach(params, function (value, key) {
+                if (_.isUndefined(value) || _.isNull(value)) {
+                    return;
+                }
+                if (!_.isArray(value)) {
+                    value = [value];
+                }
+                _.forEach(value, function (v) {
+                    if (_.isObject(v)) {
+                        v = JSON.stringify(v);
+                    }
+                    parts.push(encodeURIComponent(key) + '=' + encodeURIComponent(v));
+                });
+            });
+            return parts.join('&');
+        };
+    };
+}
+
+function $HttpParamSerializerJQLikeProvider() {
+    this.$get = function () {
+        return function (params) {
+            var parts = [];
+
+            function serialize(value, prefix, topLevel) {
+                if (_.isUndefined(value) || _.isNull(value)) {
+                    return;
+                }
+                if (_.isArray(value)) {
+                    _.forEach(value, function (v, i) {
+                        serialize(v, prefix + 
+                                     '[' +
+                                     (_.isObject(v) ? i : '') +
+                                     ']');
+                    });
+                } else if (_.isObject(value) && !_.isDate(value)) {
+                    _.forEach(value, function (v, k) {
+                        serialize(v, prefix + 
+                                     (topLevel ? '' : '[') +
+                                     k +
+                                     (topLevel ? '' : ']'));
+                    });
+                } else {
+                    parts.push(encodeURIComponent(prefix) + '=' + encodeURIComponent(value));
+                }
+            }
+
+            serialize(params, '', true);
+            
+            return parts.join('&');
+        };
+    };
 }
