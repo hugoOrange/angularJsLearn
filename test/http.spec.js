@@ -725,4 +725,59 @@ describe("$http", function () {
         expect(requests[0].url).toEqual('http://teropa.info?a%5B0%5D%5Bb%5D=42');
     });
 
+    // Shorthand Methods
+    it("supports shorthand method for GET", function () {
+        $http.get('http://teropa.info', {
+            params: {q: 42}
+        });
+
+        expect(requests[0].url).toBe('http://teropa.info?q=42');
+        expect(requests[0].method).toBe('GET');
+    });
+    it("supports shorthand method for HEAD", function () {
+        $http.head('http://teropa.info', {
+            params: {q: 42}
+        });
+
+        expect(requests[0].url).toBe('http://teropa.info?q=42');
+        expect(requests[0].method).toBe('HEAD');
+    });
+    it("supports shorthand method for DELETE", function () {
+        $http.delete('http://teropa.info', {
+            params: {q: 42}
+        });
+
+        expect(requests[0].url).toBe('http://teropa.info?q=42');
+        expect(requests[0].method).toBe('DELETE');
+    });
+    // difference: the below has request body
+    it("supports shorthand mehtod for POST", function () {
+        $http.post('http://teropa.info', 'data', {
+            params: {q: 42}
+        });
+
+        expect(requests[0].url).toBe('http://teropa.info?q=42');
+        expect(requests[0].method).toBe('POST');
+        expect(requests[0].requestBody).toBe('data');
+    });
+    it("supports shorthand mehtod for PUT", function () {
+        $http.put('http://teropa.info', 'data', {
+            params: {q: 42}
+        });
+
+        expect(requests[0].url).toBe('http://teropa.info?q=42');
+        expect(requests[0].method).toBe('PUT');
+        expect(requests[0].requestBody).toBe('data');
+    });
+    it("supports shorthand mehtod for PATCH", function () {
+        $http.patch('http://teropa.info', 'data', {
+            params: {q: 42}
+        });
+
+        expect(requests[0].url).toBe('http://teropa.info?q=42');
+        expect(requests[0].method).toBe('PATCH');
+        expect(requests[0].requestBody).toBe('data');
+    });
+
+
 });
