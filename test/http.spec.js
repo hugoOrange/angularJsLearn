@@ -1065,7 +1065,7 @@ describe("$http", function () {
 
     // Intergating $http and $applyAsync
     describe("useApplyAsync", function () {
-        
+
         beforeEach(function () {
             var injector = createInjector(['ng', function ($httpProvider) {
                 $httpProvider.useApplyAsync(true);
