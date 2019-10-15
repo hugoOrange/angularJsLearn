@@ -178,6 +178,7 @@ function $HttpProvider() {
                 reqData,
                 done,
                 config.headers,
+                config.timeout,
                 config.withCredentials
             );
             return deferred.promise;
