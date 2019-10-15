@@ -1063,4 +1063,36 @@ describe("$http", function () {
         });
     });
 
+    // Intergating $http and $applyAsync
+    describe("useApplyAsync", function () {
+        
+        beforeEach(function () {
+            var injector = createInjector(['ng', function ($httpProvider) {
+                $httpProvider.useApplyAsync(true);
+            }]);
+            $http = injector.get('$http');
+            $rootScope = injector.get('$rootScope');
+        });
+
+        it("does not resolve promise immediately when enabled", function () {
+            var resolvedSpy = jasmine.createSpy();
+            $http.get('http://teropa.info').then(resolvedSpy);
+            $rootScope.$apply();
+
+            requests[0].respond(200, {}, 'OK');
+            expect(resolvedSpy).not.toHaveBeenCalled();
+        });
+        it("resolved promise later when enabled", function () {
+            var resolvedSpy = jasmine.createSpy();
+            $http.get('http://teropa.info').then(resolvedSpy);
+            $rootScope.$apply();
+
+            requests[0].respond(200, {}, 'OK');
+            jasmine.clock().tick(100);
+            
+            expect(resolvedSpy).toHaveBeenCalled();
+        });
+
+    });
+
 });
