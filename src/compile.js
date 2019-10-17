@@ -25,9 +25,48 @@ function $CompileProvider($provide) {
         }
     };
     
-    this.$get = function () {
+    this.$get = ['$injector', function ($injector) {
+
+        function compile($compileNodes) {
+            return compileNodes($compileNodes);
+        }
+
+        // iterates over each node and repeat: collect directives, apply directives to nodes
+        function compileNodes($compileNodes) {
+            _.forEach($compileNodes, function (node) {
+                var directives = collectDirectives(node);
+                applyDirectivesToNode(directives, node);
+            });
+        }
+
+        function applyDirectivesToNode(directives, compileNode) {
+            var $compileNode = $(compileNode);
+            _.forEach(directives, function (directive) {
+                if (directive.compile) {
+                    directive.compile($compileNode);
+                }
+            });
+        }
+
+        function collectDirectives(node) {
+            var directives = [];
+            var normalizedNodeName = _.camelCase(nodeName(node).toLowerCase());
+            addDirective(directives, normalizedNodeName);
+            return directives;
+        }
+
+        function nodeName(element) {
+            return element.nodeName ? element.nodeName : element[0].nodeName;
+        }
+
+        function addDirective(directives, name) {
+            if (hasDirectives.hasOwnProperty(name)) {
+                directives.push.apply(directives, $injector.get(name + 'Directive'));
+            }
+        }
         
-    };
+        return compile;
+    }];
 
 }
 $CompileProvider.$inject = ['$provide'];
