@@ -16,7 +16,11 @@ function $CompileProvider($provide) {
                 hasDirectives[name] = [];
                 $provide.factory(name + 'Directive', ['$injector', function ($injector) {
                     var factories = hasDirectives[name];
-                    return _.map(factories, $injector.invoke);
+                    return _.map(factories, function (factory) {
+                        var directive = $injector.invoke(factory);
+                        directive.restrict = directive.restrict || 'EA';
+                        return directive;
+                    });
                 }]);
             }
             hasDirectives[name].push(directiveFactory);
@@ -58,7 +62,7 @@ function $CompileProvider($provide) {
             if (node.nodeType === Node.ELEMENT_NODE) {
                 // get directives by elements
                 var normalizedNodeName = directiveNormalize(nodeName(node).toLowerCase());
-                addDirective(directives, normalizedNodeName);
+                addDirective(directives, normalizedNodeName, 'E');
                 // get directives by attributes
                 _.forEach(node.attributes, function (attr) {
                     var normalizedAttrName = directiveNormalize(attr.name.toLowerCase());
@@ -67,18 +71,18 @@ function $CompileProvider($provide) {
                         normalizedAttrName[6].toLowerCase() + 
                         normalizedAttrName.substring(7);
                     }
-                    addDirective(directives, normalizedAttrName);
+                    addDirective(directives, normalizedAttrName, 'A');
                 });
                 // get directives by className
                 _.forEach(node.classList, function (cls) {
                     var normalizedClassName = directiveNormalize(cls);
-                    addDirective(directives, normalizedClassName);
+                    addDirective(directives, normalizedClassName, 'C');
                 });
             } else if (node.nodeType === Node.COMMENT_NODE) {
                 // get directives by comment
                 var match = /^\s*directive\:\s*([\d\w\-_]+)/.exec(node.nodeValue);
                 if (match) {
-                    addDirective(directives, directiveNormalize(match[1]));
+                    addDirective(directives, directiveNormalize(match[1]), 'M');
                 }
             }
             return directives;
@@ -92,9 +96,13 @@ function $CompileProvider($provide) {
             return element.nodeName ? element.nodeName : element[0].nodeName;
         }
 
-        function addDirective(directives, name) {
+        function addDirective(directives, name, mode) {
             if (hasDirectives.hasOwnProperty(name)) {
-                directives.push.apply(directives, $injector.get(name + 'Directive'));
+                var foundDirectives = $injector.get(name + 'Directive');
+                var applicableDirectives = _.filter(foundDirectives, function (dir) {
+                    return dir.restrict.indexOf(mode) !== -1;
+                });
+                directives.push.apply(directives, applicableDirectives);
             }
         }
         
