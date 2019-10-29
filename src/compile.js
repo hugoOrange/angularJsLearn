@@ -188,7 +188,7 @@ function $CompileProvider($provide) {
                 }
             }
         }
-        
+
         return compile;
     }];
 
