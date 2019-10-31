@@ -4,6 +4,24 @@
 function $CompileProvider($provide) {
 
     var PREFIX_REGEXP = /(x[\:\-_]|data[\:\-_])/i;
+    var BOOLEAN_ATTRS = {
+        multiple: true,
+        selected: true,
+        checked: true,
+        disabled: true,
+        readOnly: true,
+        required: true,
+        open: true
+    };
+    var BOOLEAN_ELEMENTS = {
+        INPUT: true,
+        SELECT: true,
+        OPTION: true,
+        TEXTAREA: true,
+        BUTTON: true,
+        FORM: true,
+        DETAILS: true
+    };
 
     var hasDirectives = {};
 
@@ -126,6 +144,9 @@ function $CompileProvider($provide) {
                     normalizedAttrName = directiveNormalize(name.toLowerCase());
                     addDirective(directives, normalizedAttrName, 'A', attrStartName, attrEndName);
                     attrs[normalizedAttrName] = attr.value.trim();
+                    if (isBooleanAttribute(node, normalizedAttrName)) {
+                        attrs[normalizedAttrName] = true;
+                    }
                 });
                 // get directives by className
                 _.forEach(node.classList, function (cls) {
@@ -189,6 +210,10 @@ function $CompileProvider($provide) {
                     return a.index - b.index;
                 }
             }
+        }
+
+        function isBooleanAttribute(node, attrName) {
+            return BOOLEAN_ATTRS[attrName] && BOOLEAN_ELEMENTS[node.nodeName];
         }
 
         return compile;
