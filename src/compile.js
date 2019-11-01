@@ -59,6 +59,9 @@ function $CompileProvider($provide) {
         }
         Attributes.prototype.$set = function (key, value, writeArr) {
             this[key] = value;
+            if (isBooleanAttribute(this.$$element[0], key)) {
+                this.$$element.prop(key, value);
+            }
             if (writeArr !== false) {
                 this.$$element.attr(key, value);
             }
