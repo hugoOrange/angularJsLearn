@@ -52,11 +52,12 @@ function $CompileProvider($provide) {
         }
     };
     
-    this.$get = ['$injector', function ($injector) {
+    this.$get = ['$injector', '$rootScope', function ($injector, $rootScope) {
 
         function Attributes(element) {
             this.$$element = element;
             this.$attr = {};
+            this.$$observers = {};
         }
         Attributes.prototype.$set = function (key, value, writeArr, attrName) {
             this[key] = value;
@@ -77,6 +78,32 @@ function $CompileProvider($provide) {
             if (writeArr !== false) {
                 this.$$element.attr(attrName, value);
             }
+
+            if (this.$$observers[key]) {
+                _.forEach(this.$$observers[key], function (observer) {
+                    try {
+                        observer(value);
+                    } catch (e) {
+                        console.log(e);
+                    }
+                });
+            }
+        };
+        Attributes.prototype.$observe = function (key, fn) {
+            var self = this;
+            this.$$observers = this.$$observers || Object.create(null);
+            this.$$observers[key] = this.$$observers[key] || [];
+            this.$$observers[key].push(fn);
+            $rootScope.$evalAsync(function () {
+                fn(self[key]);
+            });
+
+            return function () {
+                var index = self.$$observers[key].indexOf(fn);
+                if (index >= 0) {
+                    self.$$observers[key].splice(index, 1);
+                }
+            };
         };
 
         function compile($compileNodes) {
