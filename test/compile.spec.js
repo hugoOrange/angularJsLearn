@@ -953,5 +953,5 @@ describe("$compile", function () {
         });
 
     });
-    
+
 });
