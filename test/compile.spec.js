@@ -953,5 +953,32 @@ describe("$compile", function () {
         });
 
     });
+    
+    // Public Link Function
+    describe("linking", function () {
+        
+        it("returns a public link function from compile", function () {
+            var injector = makeInjectorWithDirectives('myDirective', function () {
+                return { compile: _.noop };
+            });
+            injector.invoke(function ($compile) {
+                var el = $("<div my-directive></div>");
+                var linkFn = $compile(el);
+                expect(linkFn).toBeDefined();
+                expect(_.isFunction(linkFn)).toBe(true);
+            });
+        });
+        
+        it("takes a scope and attaches it to elements", function () {
+            var injector = makeInjectorWithDirectives('mydirective', function () {
+                return { compile: _.noop };
+            });
+            injector.invoke(function ($compile, $rootScope) {
+                var el = $("<div my-directive></div>");
+                $compile(el)($rootScope);
+                expect(el.data('$scope')).toBe($rootScope);
+            });
+        });
+    });
 
 });
