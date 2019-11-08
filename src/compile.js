@@ -38,6 +38,9 @@ function $CompileProvider($provide) {
                         var directive = $injector.invoke(factory);
                         directive.restrict = directive.restrict || 'EA';
                         directive.priority = directive.priority || 0;
+                        if (directive.link && !directive.compile) {
+                            directive.compile = _.constant(directive.link);
+                        }
                         directive.name = directive.name || name;
                         directive.index = i;
                         return directive;
@@ -124,6 +127,21 @@ function $CompileProvider($provide) {
             }
         };
 
+        /**
+         *       Compilation                       Linking
+         *           \ Calls                          \ Calls
+         *            ∨                               ∨
+         *          compile        --returns-->  publicLinkFn
+         *           \ Calls                          \ Calls
+         *            ∨                               ∨
+         *       compileNodes      --returns--> compositeLinkFn
+         *           \ Calls                          \ Calls
+         *            ∨                               ∨
+         *  applyDirectivesToNodes --returns-->   nodeLinkFn
+         *           \ Calls                          \ Calls
+         *            ∨                               ∨
+         *   directives.compile    --returns--> directives.link
+         */
         function compile($compileNodes) {
             var compositeLinkFn = compileNodes($compileNodes);
 
