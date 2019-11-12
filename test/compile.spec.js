@@ -1163,6 +1163,28 @@ describe("$compile", function () {
                 expect(givenElements[1]).toBe(el2);
             });
         });
+
+        // Linking Directives Across Multiple Nodes
+        it("invokes multi-element directive link functions with whole group", function () {
+            var givenElements;
+            var injector = makeInjectorWithDirectives('myDirective', function () {
+                return {
+                    multiElement: true,
+                    link: function (scope, element, attrs) {
+                        givenElements = element;
+                    }
+                };
+            });
+            injector.invoke(function ($compile, $rootScope) {
+                var el = $(
+                    '<div my-directive-start></div>' +
+                    '<p></p>' +
+                    '<div my-directive-end></div>'
+                );
+                $compile(el)($rootScope);
+                expect(givenElements.length).toBe(3);
+            });
+        });
         
     });
 
