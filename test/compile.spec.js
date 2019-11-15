@@ -1088,7 +1088,7 @@ describe("$compile", function () {
                             linkings.push(['post', element[0]]);
                         }
                     }
-                }
+                };
             });
             injector.invoke(function ($compile, $rootScope) {
                 var el = $('<div my-directive><div my-directive></div></div>');
@@ -1289,14 +1289,14 @@ describe("$compile", function () {
                 myDirective: function () {
                     return {
                         scope: {}
-                    }
+                    };
                 },
                 myOtherDirective: function () {
                     return {
                         link: function (scope) {
                             givenScope = scope;
                         }
-                    }
+                    };
                 }
             });
             injector.invoke(function ($compile, $rootScope) {
@@ -1335,7 +1335,7 @@ describe("$compile", function () {
                 myOtherDirective: function () {
                     return {
                         scope: true
-                    }
+                    };
                 }
             });
             injector.invoke(function ($compile, $rootScope) {
@@ -1361,6 +1361,65 @@ describe("$compile", function () {
                 expect(el.hasClass("ng-isolate-scope")).toBe(true);
                 expect(el.hasClass("ng-scope")).toBe(false);
                 expect(el.data("$isolateScope")).toBe(givenScope);
+            });
+        });
+
+        // Isolated Attributes Binding
+        it("allows observing attribute to the isolate scope", function () {
+            var givenScope, givenAttrs;
+            var injector = makeInjectorWithDirectives('myDirective', function () {
+                return {
+                    scope: {
+                        anAttr: '@'
+                    },
+                    link: function (scope, element, attrs) {
+                        givenScope = scope;
+                        givenAttrs = attrs;
+                    }
+                };
+            });
+            injector.invoke(function ($compile, $rootScope) {
+                var el = $('<div my-directive></div');
+                $compile(el)($rootScope);
+
+                givenAttrs.$set('anAttr', '42');
+                expect(givenScope.anAttr).toEqual('42');
+            });
+        });
+        it("sets initial value of observed attr to the isolate scope", function () {
+            var givenScope;
+            var injector = makeInjectorWithDirectives('myDirective', function () {
+                return {
+                    scope: {
+                        anAttr: '@'
+                    },
+                    link: function (scope, element, attrs) {
+                        givenScope = scope;
+                    }
+                };
+            });
+            injector.invoke(function ($compile, $rootScope) {
+                var el = $("<div my-directive an-attr='42'></div>");
+                $compile(el)($rootScope);
+                expect(givenScope.anAttr).toEqual('42');
+            });
+        });
+        it("allows aliasing observed attribute", function () {
+            var givenScope;
+            var injector = makeInjectorWithDirectives("myDirective", function () {
+                return {
+                    scope: {
+                        aScopeAttr: '@anAttr'
+                    },
+                    link: function (scope, element, attrs) {
+                        givenScope = scope;
+                    }
+                };
+            });
+            injector.invoke(function ($compile, $rootScope) {
+                var el = $("<div my-directive an-attr='42'></div>");
+                $compile(el)($rootScope);
+                expect(givenScope.anAttr).toEqual('42');
             });
         });
 
