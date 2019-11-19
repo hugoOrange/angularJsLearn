@@ -28,10 +28,12 @@ function $CompileProvider($provide) {
     function parseIsolateBindings (scope) {
         var bindings = {};
         _.forEach(scope, function (definition, scopeName) {
-            var match = definition.match(/\s*@\s*(\w*)\s*/);
+            var match = definition.match(/\s*(@|=(\*?)(\??))\s*(\w*)\s*/);
             bindings[scopeName] = {
-                mode: '@',
-                attrName: match[1] || scopeName
+                mode: match[1][0],
+                collection: match[2] === '*',
+                optional: match[3],
+                attrName: match[4] || scopeName
             };
         });
         return bindings;
@@ -70,7 +72,8 @@ function $CompileProvider($provide) {
         }
     };
     
-    this.$get = ['$injector', '$rootScope', function ($injector, $rootScope) {
+    this.$get = ['$injector', '$rootScope', '$parse',
+        function ($injector, $rootScope, $parse) {
 
         function Attributes(element) {
             this.$$element = element;
@@ -309,6 +312,42 @@ function $CompileProvider($provide) {
                                 if (attrs[attrName]) {
                                     isolateScope[attrName] = attrs[attrName];
                                 }
+                                break;
+                            case '=':
+                                if (definition.optional && !attrs[attrName]) {
+                                    break;
+                                }
+                                var parentGet = $parse(attrs[attrName]);
+                                var lastValue = isolateScope[scopeName] = parentGet(scope);
+                                var parentValueWatch = function () {
+                                    var parentValue = parentGet(scope);
+                                    if (isolateScope[scopeName] !== parentValue) {
+                                        // directive scope is not equal to parent scope,
+                                        // means one of them must be changed
+                                        if (parentValue !== lastValue) {
+                                            // parent scope change,
+                                            // whatever the directive scope should be changed
+                                            // [which means the parent scope has more priority]
+                                            // DOING: parent scope -> directive scope
+                                            isolateScope[scopeName] = parentValue;
+                                        } else {
+                                            // parent scope no change,
+                                            // means directive scope changing
+                                            // DOING: directive scope -> parent scope
+                                            parentValue = isolateScope[scopeName];
+                                            parentGet.assign(scope, parentValue);
+                                        }
+                                    }
+                                    lastValue = parentValue;
+                                    return lastValue;
+                                };
+                                var unwatch;
+                                if (definition.collection) {
+                                    unwatch = scope.$watchCollection(attrs[attrName], parentValueWatch);
+                                } else {
+                                    unwatch = scope.$watch(parentValueWatch);
+                                }
+                                isolateScope.$on("destroy", unwatch);
                                 break;
                         }
                     });
