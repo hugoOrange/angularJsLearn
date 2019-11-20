@@ -1617,7 +1617,7 @@ describe("$compile", function () {
                         myExpr: '&'
                     },
                     link: function (scope) {
-                        givenScope = scope
+                        givenScope = scope;
                     }
                 };
             });
