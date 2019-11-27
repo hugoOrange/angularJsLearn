@@ -1783,6 +1783,8 @@ describe("$compile", function () {
         });
 
         // Controller Directives Locals
+        // It is more often to use contrller directive than pure directive, for that it is
+        // more convenient to unit testing, which you needn't instantiate the directive.
         it("gets scope, element, and attrs through DI", function () {
             var gotScope, gotElement, gotAttrs;
             function MyController($element, $scope, $attrs) {
@@ -1803,6 +1805,26 @@ describe("$compile", function () {
                 expect(gotScope).toBe($rootScope);
                 expect(gotAttrs).toBeDefined();
                 expect(gotAttrs.anAttr).toBe("abc");
+            });
+        });
+
+        // Attaching Directive Controllers on The Scope
+        it("can be attached on the scope", function () {
+            function MyController() { }
+            var injector = createInjector(['ng', function ($compileProvider, $controllerProvider) {
+                $controllerProvider.register('MyController', MyController);
+                $compileProvider.directive('myDirective', function () {
+                    return {
+                        controller: 'MyController',
+                        controllerAs: 'myCtrl'
+                    };
+                });
+            }]);
+            injector.invoke(function ($compile, $rootScope) {
+                var el = $("<div my-directive></div>");
+                $compile(el)($rootScope);
+                expect($rootScope.myCtrl).toBeDefined();
+                expect($rootScope.myCtrl instanceof MyController).toBe(true);
             });
         });
 
