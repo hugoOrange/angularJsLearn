@@ -38,6 +38,20 @@ function $CompileProvider($provide) {
         });
         return bindings;
     }
+    function parseDirectiveBindings (directive) {
+        var bindings = {};
+        if (_.isObject(directive.scope)) {
+            if (directive.bindToController) {
+                bindings.bindToController = parseIsolateBindings(directive.scope);
+            } else {
+                bindings.isolateScope = parseIsolateBindings(directive.scope);
+            }
+        }
+        if (_.isObject(directive.bindToController)) {
+            bindings.bindToController = parseIsolateBindings(directive.bindToController);
+        }
+        return bindings;
+    }
 
     this.directive = function (name, directiveFactory) {
         if (_.isString(name)) {
@@ -55,9 +69,7 @@ function $CompileProvider($provide) {
                         if (directive.link && !directive.compile) {
                             directive.compile = _.constant(directive.link);
                         }
-                        if (_.isObject(directive.scope)) {
-                            directive.$$isolateBindings = parseIsolateBindings(directive.scope);
-                        }
+                        directive.$$bindings = parseDirectiveBindings(directive);
                         directive.name = directive.name || name;
                         directive.index = i;
                         return directive;
@@ -233,7 +245,7 @@ function $CompileProvider($provide) {
             var $compileNode = $(compileNode);
             var terminalPriority = -Number.MAX_VALUE;
             var terminal = false;
-            var preLinkFns = [], postLinkFns = [];
+            var preLinkFns = [], postLinkFns = [], controllers = {};
             var newScopeDirective, newIsolateScopeDirective;
             var controllerDirectives;
 
@@ -302,10 +314,17 @@ function $CompileProvider($provide) {
             function nodeLinkFn(childLinkFn, scope, linkNode) {
                 var $element = $(linkNode);
 
+                var isolateScope;
+                if (newIsolateScopeDirective) {
+                    isolateScope = scope.$new(true);
+                    $element.addClass("ng-isolate-scope");
+                    $element.data("$isolateScope", isolateScope);
+                }
+
                 if (controllerDirectives) {
                     _.forEach(controllerDirectives, function (directive) {
                         var locals = {
-                            $scope: scope,
+                            $scope: directive === newIsolateScopeDirective ? isolateScope : scope,
                             $attrs: attrs,
                             $element: $element
                         };
@@ -313,25 +332,31 @@ function $CompileProvider($provide) {
                         if (controllerName === '@') {
                             controllerName = attrs[directive.name];
                         }
-                        $controller(controllerName, locals, directive.controllerAs);
+                        controllers[directive.name] =
+                            $controller(controllerName, locals, true, directive.controllerAs);
                     });
                 }
 
-                var isolateScope;
                 if (newIsolateScopeDirective) {
-                    isolateScope = scope.$new(true);
-                    $element.addClass("ng-isolate-scope");
-                    $element.data("$isolateScope", isolateScope);
-                    _.forEach(newIsolateScopeDirective.$$isolateBindings,
-                        function (definition, scopeName) {
+                    initializeDirectiveBindings(
+                        scope,
+                        attrs,
+                        isolateScope,
+                        newIsolateScopeDirective.$$bindings.isolateScope,
+                        isolateScope
+                    );
+                }
+
+                function initializeDirectiveBindings(scope, attrs, destination, bindings, newScope) {
+                    _.forEach(bindings, function (definition, scopeName) {
                         var attrName = definition.attrName;
                         switch (definition.mode) {
                             case '@':
                                 attrs.$observe(attrName, function (newAttrValue) {
-                                    isolateScope[attrName] = newAttrValue;
+                                    destination[scopeName] = newAttrValue;
                                 });
                                 if (attrs[attrName]) {
-                                    isolateScope[attrName] = attrs[attrName];
+                                    destination[scopeName] = attrs[attrName];
                                 }
                                 break;
                             case '=':
@@ -339,10 +364,10 @@ function $CompileProvider($provide) {
                                     break;
                                 }
                                 var parentGet = $parse(attrs[attrName]);
-                                var lastValue = isolateScope[scopeName] = parentGet(scope);
+                                var lastValue = destination[scopeName] = parentGet(scope);
                                 var parentValueWatch = function () {
                                     var parentValue = parentGet(scope);
-                                    if (isolateScope[scopeName] !== parentValue) {
+                                    if (destination[scopeName] !== parentValue) {
                                         // directive scope is not equal to parent scope,
                                         // means one of them must be changed
                                         if (parentValue !== lastValue) {
@@ -350,12 +375,12 @@ function $CompileProvider($provide) {
                                             // whatever the directive scope should be changed
                                             // [which means the parent scope has more priority]
                                             // DOING: parent scope -> directive scope
-                                            isolateScope[scopeName] = parentValue;
+                                            destination[scopeName] = parentValue;
                                         } else {
                                             // parent scope no change,
                                             // means directive scope changing
                                             // DOING: directive scope -> parent scope
-                                            parentValue = isolateScope[scopeName];
+                                            parentValue = destination[scopeName];
                                             parentGet.assign(scope, parentValue);
                                         }
                                     }
@@ -368,20 +393,35 @@ function $CompileProvider($provide) {
                                 } else {
                                     unwatch = scope.$watch(parentValueWatch);
                                 }
-                                isolateScope.$on("destroy", unwatch);
+                                newScope.$on("destroy", unwatch);
                                 break;
                             case '&':
                                 var parentExpr = $parse(attrs[attrName]);
                                 if (parentExpr === _.noop && definition.optional) {
                                     break;
                                 }
-                                isolateScope[scopeName] = function (locals) {
+                                destination[scopeName] = function (locals) {
                                     return parentExpr(scope, locals);
                                 };
                                 break;
                         }
                     });
                 }
+
+                var scopeDirective = newIsolateScopeDirective || newScopeDirective;
+                if (scopeDirective && controllers[scopeDirective.name]) {
+                    initializeDirectiveBindings(
+                        scope,
+                        attrs,
+                        controllers[scopeDirective.name].instance,
+                        scopeDirective.$$bindings.bindToController,
+                        isolateScope
+                    );
+                }
+
+                _.forEach(controllers, function (controller) {
+                    controller();
+                });
 
                 _.forEach(preLinkFns, function (linkFn) {
                     linkFn(linkFn.isolateScope ? isolateScope : scope, $element, attrs);
