@@ -2052,6 +2052,53 @@ describe("$compile", function () {
             });
         });
 
+        // Self-Requiring Controllers
+        it("is passed to link function if there is no require", function () {
+            function MyController() { }
+            var gotMyController;
+            var injector = createInjector(['ng', function ($compileProvider) {
+                $compileProvider.directive('myDirective', function () {
+                    return {
+                        scope: {},
+                        controller: MyController,
+                        link: function (scope, element, attrs, myController) {
+                            gotMyController = myController;
+                        }
+                    };
+                });
+            }]);
+            injector.invoke(function ($compile, $rootScope) {
+                var el = $("<div my-directive></div>");
+                $compile(el)($rootScope);
+                expect(gotMyController).toBeDefined();
+                expect(gotMyController instanceof MyController).toBe(true);
+            });
+        });
+
+        // Requiring Controllers in Multi-Element Directives
+        it("is passed through grouped link wrapper", function () {
+            function MyController() { }
+            var gotMyController;
+            var injector = createInjector(['ng', function ($compileProvider) {
+                $compileProvider.directive('myDirective', function () {
+                    return {
+                        multiElement: true,
+                        scope: {},
+                        controller: MyController,
+                        link: function (scope, element, attrs, myController) {
+                            gotMyController = myController;
+                        }
+                    };
+                });
+            }]);
+            injector.invoke(function ($compile, $rootScope) {
+                var el = $("<div my-directive-start></div><div my-directive-end></div>");
+                $compile(el)($rootScope);
+                expect(gotMyController).toBeDefined();
+                expect(gotMyController instanceof MyController).toBe(true);
+            });
+        });
+
     });
 
 });

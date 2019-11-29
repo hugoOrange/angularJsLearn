@@ -72,6 +72,7 @@ function $CompileProvider($provide) {
                         directive.$$bindings = parseDirectiveBindings(directive);
                         directive.name = directive.name || name;
                         directive.index = i;
+                        directive.require = directive.require || (directive.controller && name);
                         return directive;
                     });
                 }]);
@@ -487,9 +488,9 @@ function $CompileProvider($provide) {
             return $(nodes);
         }
         function groupElementsLinkFnWrapper(linkFn, attrStart, attrEnd) {
-            return function (scope, element, attrs) {
+            return function (scope, element, attrs, ctrl) {
                 var group = groupScan(element[0], attrStart, attrEnd);
-                return linkFn(scope, group, attrs);
+                return linkFn(scope, group, attrs, ctrl);
             };
         }
 
