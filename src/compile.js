@@ -269,14 +269,18 @@ function $CompileProvider($provide) {
             }
             
             function getControllers(require) {
-                var value;
-                if (controllers[require]) {
-                    value = controllers[require].instance;
+                if (_.isArray(require)) {
+                    return _.map(require, getControllers);
+                } else {
+                    var value;
+                    if (controllers[require]) {
+                        value = controllers[require].instance;
+                    }
+                    if (!value) {
+                        throw "Controller " + require + " required by directive, cannot be found!";
+                    }
+                    return value;
                 }
-                if (!value) {
-                    throw "Controller " + require + " required by directive, cannot be found!";
-                }
-                return value;
             }
 
             _.forEach(directives, function (directive) {
@@ -295,7 +299,7 @@ function $CompileProvider($provide) {
                         }
                         newIsolateScopeDirective = directive;
                     } else {
-                        if (newIsolateScopeDirective || newScopeDirective) {
+                        if (newIsolateScopeDirective) {
                             throw 'Multiple directives asking for new/inherited scope';
                         }
                         newScopeDirective = newScopeDirective || directive;

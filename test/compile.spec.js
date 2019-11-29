@@ -2016,6 +2016,41 @@ describe("$compile", function () {
                 expect(gotMyController instanceof MyController).toBe(true);
             });
         });
+        it("can be required from multiple sibling directives", function () {
+            function MyController() { }
+            function MyOtherController() { }
+            var gotMyControllers;
+            var injector = createInjector(['ng', function ($compileProvider) {
+                $compileProvider.directive('myDirective', function () {
+                    return {
+                        scope: true,
+                        controller: MyController
+                    }
+                });
+                $compileProvider.directive('myOtherDirective', function () {
+                    return {
+                        scope: true,
+                        controller: MyOtherController
+                    };
+                });
+                $compileProvider.directive('myThirdDirective', function () {
+                    return {
+                        require: ['myDirective', 'myOtherDirective'],
+                        link: function (scope, element, attrs, controllers) {
+                            gotMyControllers = controllers;
+                        }
+                    };
+                });
+            }]);
+            injector.invoke(function ($compile, $rootScope) {
+                var el = $("<div my-directive my-other-directive my-third-directive></div>");
+                $compile(el)($rootScope);
+                expect(gotMyControllers).toBeDefined();
+                expect(gotMyControllers.length).toBe(2);
+                expect(gotMyControllers[0] instanceof MyController).toBe(true);
+                expect(gotMyControllers[1] instanceof MyOtherController).toBe(true);
+            });
+        });
 
     });
 
