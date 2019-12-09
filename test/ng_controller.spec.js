@@ -72,4 +72,20 @@ describe("ngController", function () {
         });
     });
 
+    // Looking Up A Controller Constructor from The Scope
+    it("allows looking up controller from surrounding scope", function () {
+        var gotScope;
+        function MyController($scope) {
+            gotScope = $scope;
+        }
+        var injector = createInjector(['ng']);
+        injector.invoke(function ($compile, $rootScope) {
+            var el = $("<div ng-controller='MyCtrlOnScope as myCtrl'></div>");
+            $rootScope.MyCtrlOnScope = MyController;
+            $compile(el)($rootScope);
+            expect(gotScope.myCtrl).toBeDefined();
+            expect(gotScope.myCtrl instanceof MyController).toBe(true);
+        });
+    });
+
 });
