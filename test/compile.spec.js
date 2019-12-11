@@ -2318,6 +2318,28 @@ describe("$compile", function () {
             });
         });
 
+        // Disallowing two templates in one directive
+        it("does not allow two directives with templates", function () {
+            var injector = makeInjectorWithDirectives({
+                myDirective: function () {
+                    return {
+                        template: '<div></div>'
+                    };
+                },
+                myOtherDirective: function () {
+                    return {
+                        template: '<div></div>'
+                    }
+                }
+            });
+            injector.invoke(function ($compile) {
+                var el = $("<div my-directive my-other-directive></div>");
+                expect(function () {
+                    $compile(el)
+                }).toThrow();
+            });
+        });
+
     });
 
 });

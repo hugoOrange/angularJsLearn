@@ -247,6 +247,7 @@ function $CompileProvider($provide) {
             var terminal = false;
             var preLinkFns = [], postLinkFns = [], controllers = {};
             var newScopeDirective, newIsolateScopeDirective;
+            var templateDirective;
             var controllerDirectives;
 
             function addLinkFns(preLinkFn, postLinkFn, attrStart, attrEnd, isolateScope, require) {
@@ -343,7 +344,12 @@ function $CompileProvider($provide) {
                         addLinkFns(linkFn.pre, linkFn.post, attrStart, attrEnd, isolateScope, require);
                     }
                 }
+
                 if (directive.template) {
+                    if (templateDirective) {
+                        throw "Multiple directives asking for template";
+                    }
+                    templateDirective = directive;
                     $compileNode.html(directive.template);
                 }
                 if (directive.terminal) {
