@@ -650,7 +650,7 @@ describe("$compile", function () {
             );
         });
 
-        it("sets the value of boolean atributes to true", function () {
+        it("sets the value of boolean attributes to true", function () {
             registerAndCompile(
                 'myDirective',
                 '<input my-directive disabled>',
@@ -877,7 +877,7 @@ describe("$compile", function () {
                 }
             );
         });
-        it("does not add atribute from class class without a directive", function () {
+        it("does not add attribute from class without a directive", function () {
             registerAndCompile(
                 'myDirective',
                 '<my-directive class="some-class"></my-directive>',
@@ -1999,7 +1999,7 @@ describe("$compile", function () {
                     return {
                         scope: {},
                         controller: MyController
-                    }
+                    };
                 });
                 $compileProvider.directive('myOtherDirective', function () {
                     return {
@@ -2025,7 +2025,7 @@ describe("$compile", function () {
                     return {
                         scope: true,
                         controller: MyController
-                    }
+                    };
                 });
                 $compileProvider.directive('myOtherDirective', function () {
                     return {
@@ -2215,7 +2215,7 @@ describe("$compile", function () {
                         link: function (scope, element, attrs, ctrl) {
                             gotCtrl = ctrl;
                         }
-                    }
+                    };
                 });
             }]);
             injector.invoke(function ($compile, $rootScope) {

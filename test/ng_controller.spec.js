@@ -13,7 +13,7 @@ describe("ngController", function () {
         }
         var injector = createInjector(['ng', function ($controllerProvider) {
             $controllerProvider.register('MyController', MyController);
-        }])
+        }]);
         injector.invoke(function ($compile, $rootScope) {
             var el = $("<div ng-controller='MyController'></div>");
             $compile(el)($rootScope);
