@@ -2414,7 +2414,7 @@ describe("$compile", function () {
                     myOtherDirective: function () {
                         return {
                             compile: otherCompileSpy
-                        }
+                        };
                     }
                 });
                 injector.invoke(function ($compile) {
@@ -2437,7 +2437,7 @@ describe("$compile", function () {
                     var el = $("<div my-directive></div>");
                     $compile(el);
                     expect(compileSpy).not.toHaveBeenCalled();
-                })
+                });
             });
             it("immediately empties out the element", function () {
                 var injector = makeInjectorWithDirectives({
@@ -2503,7 +2503,7 @@ describe("$compile", function () {
                 injector.invoke(function ($compile, $rootScope) {
                     var el = $("<div my-directive></div>");
 
-                    $compile(el)
+                    $compile(el);
                     $rootScope.$apply();
 
                     requests[0].respond(200, {}, '<div class="from-template"></div>');
@@ -2556,6 +2556,30 @@ describe("$compile", function () {
 
                     requests[0].respond(200, {}, '<div my-other-directive></div>');
                     expect(otherCompileSpy).toHaveBeenCalled();
+                });
+            });
+
+            // TemplateUrl Functions
+            it("supports functions as values", function () {
+                var templateUrlSpy = jasmine.createSpy()
+                    .and.returnValue('/my_directive.html');
+                var injector = makeInjectorWithDirectives({
+                    myDirective: function () {
+                        return {
+                            templateUrl: templateUrlSpy
+                        };
+                    }
+                });
+                injector.invoke(function ($compile, $rootScope) {
+                    var el = $("<div my-directive></div>");
+
+                    $compile(el);
+                    $rootScope.$digest();
+
+                    expect(requests[0].url).toBe('/my_directive.html');
+                    expect(templateUrlSpy).toHaveBeenCalled();
+                    expect(templateUrlSpy.calls.first().args[0][0]).toBe(el[0]);
+                    expect(templateUrlSpy.calls.first().args[1].myDirective).toBeDefined();
                 });
             });
 
