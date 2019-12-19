@@ -255,7 +255,7 @@ function $CompileProvider($provide) {
             var newScopeDirective,
                 newIsolateScopeDirective = previousCompileContext.newIsolateScopeDirective;
             var templateDirective = previousCompileContext.templateDirective;
-            var controllerDirectives;
+            var controllerDirectives = previousCompileContext.controllerDirectives;
 
             function addLinkFns(preLinkFn, postLinkFn, attrStart, attrEnd, isolateScope, require) {
                 if (preLinkFn) {
@@ -395,9 +395,10 @@ function $CompileProvider($provide) {
                         attrs,
                         {
                             templateDirective: templateDirective,
+                            newIsolateScopeDirective: newIsolateScopeDirective,
                             preLinkFns: preLinkFns,
                             postLinkFns: postLinkFns,
-                            newIsolateScopeDirective: newIsolateScopeDirective
+                            controllerDirectives: controllerDirectives
                         }
                     );
                     return false;
