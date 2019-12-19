@@ -252,7 +252,8 @@ function $CompileProvider($provide) {
             var preLinkFns  = previousCompileContext.preLinkFns  || [],
                 postLinkFns = previousCompileContext.postLinkFns || [],
                 controllers = previousCompileContext.controllers || {};
-            var newScopeDirective, newIsolateScopeDirective;
+            var newScopeDirective,
+                newIsolateScopeDirective = previousCompileContext.newIsolateScopeDirective;
             var templateDirective = previousCompileContext.templateDirective;
             var controllerDirectives;
 
@@ -395,7 +396,8 @@ function $CompileProvider($provide) {
                         {
                             templateDirective: templateDirective,
                             preLinkFns: preLinkFns,
-                            postLinkFns: postLinkFns
+                            postLinkFns: postLinkFns,
+                            newIsolateScopeDirective: newIsolateScopeDirective
                         }
                     );
                     return false;
