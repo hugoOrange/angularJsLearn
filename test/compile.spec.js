@@ -2793,7 +2793,7 @@ describe("$compile", function () {
                 });
                 injector.invoke(function ($compile, $rootScope) {
                     var el = $("<div my-directive my-other-directive></div>");
-                    
+
                     var linkFunction = $compile(el);
                     $rootScope.$apply();
 
