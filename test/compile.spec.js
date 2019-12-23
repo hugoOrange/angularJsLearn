@@ -2891,6 +2891,129 @@ describe("$compile", function () {
                 }).toThrow();
             });
         });
+
+        // Transcludsion and Scope
+        it("makes scope available to link functions inside", function () {
+            var injector = makeInjectorWithDirectives({
+                myTranscluder: function () {
+                    return {
+                        transclude: true,
+                        link: function (scope, element, attrs, ctrl, transclude) {
+                            element.append(transclude());
+                        }
+                    };
+                },
+                myInnerDirective: function () {
+                    return {
+                        link: function (scope, element) {
+                            element.html(scope.anAttr);
+                        }
+                    };
+                }
+            });
+            injector.invoke(function ($compile, $rootScope) {
+                var el = $("<div my-transcluder><div my-inner-directive></div></div>");
+
+                $rootScope.anAttr = 'Hello from root';
+                $compile(el)($rootScope);
+                expect(el.find('> [my-inner-directive]').html()).toBe("Hello from root");
+            })
+        });
+        it("does not use the inherited scope of the directive", function () {
+            var injector = makeInjectorWithDirectives({
+                myTranscluder: function () {
+                    return {
+                        transclude: true,
+                        scope: true,
+                        link: function (scope, element, attrs, ctrl, transclude) {
+                            scope.anAttr = "Shadowed attribute";
+                            element.append(transclude());
+                        }
+                    };
+                },
+                myInnerDirective: function () {
+                    return {
+                        link: function (scope, element) {
+                            element.html(scope.anAttr);
+                        }
+                    };
+                }
+            });
+            injector.invoke(function ($compile, $rootScope) {
+                var el = $("<div my-transcluder><div my-inner-directive></div></div>");
+
+                $rootScope.anAttr = 'Hello from root';
+                $compile(el)($rootScope);
+                expect(el.find('> [my-inner-directive]').html()).toBe("Hello from root");
+            })
+        });
+        it("stops watching when transcluding directives is destroyed", function () {
+            var watchSpy = jasmine.createSpy();
+            var injector = makeInjectorWithDirectives({
+                myTranscluder: function () {
+                    return {
+                        transclude: true,
+                        scope: true,
+                        link: function (scope, element, attrs, ctrl, transclude) {
+                            element.append(transclude());
+                            scope.$on('destroyNow', function () {
+                                scope.$destroy();
+                            });
+                        }
+                    };
+                },
+                myInnerDirective: function () {
+                    return {
+                        link: function (scope, element) {
+                            scope.$watch(watchSpy);
+                        }
+                    };
+                }
+            });
+            injector.invoke(function ($compile, $rootScope) {
+                var el = $("<div my-transcluder><div my-inner-directive></div></div>");
+                $compile(el)($rootScope);
+
+                $rootScope.$apply();
+                expect(watchSpy.calls.count()).toBe(2);
+
+                $rootScope.$apply();
+                expect(watchSpy.calls.count()).toBe(3);
+                
+                $rootScope.$broadcast('destroyNow');
+                $rootScope.$apply();
+                expect(watchSpy.calls.count()).toBe(3);
+            });
+        });
+        it("allows passing another scope to transcludsion function", function () {
+            var otherLinkSpy = jasmine.createSpy();
+            var injector = makeInjectorWithDirectives({
+                myTranscluder: function () {
+                    return {
+                        transclude: true,
+                        scope: {},
+                        template: '<div></div>',
+                        link: function (scope, element, attrs, ctrl, transclude) {
+                            var mySpecialScope = scope.$new(true);
+                            mySpecialScope.specialAttr = 42;
+                            transclude(mySpecialScope);
+                        }
+                    };
+                },
+                myOtherDirective: function () {
+                    return {
+                        link: otherLinkSpy
+                    };
+                }
+            });
+            injector.invoke(function ($compile, $rootScope) {
+                var el = $("<div my-transcluder><div my-other-directive></div></div>");
+                $compile(el)($rootScope);
+                
+                var transcludedScope = otherLinkSpy.calls.first().args[0];
+                expect(transcludedScope.specialAttr).toBe(42);
+            });
+        });
         
     });
 
